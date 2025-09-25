@@ -6,6 +6,7 @@ export default [
 		file: 'layouts/RootLayout.tsx',
 		children: [
 			{ index: true, file: 'routes/pages/home.tsx' },
+			{ path: 'products', file: 'routes/pages/products/Product-List.tsx' },
 		],
     
 	},
