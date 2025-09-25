@@ -33,7 +33,7 @@ export default function PaymentPage() {
 				Add <span className='font-semibold'>$299.11</span> to cart and get free shipping!
 			</div>
 
-			<div className='grid grid-cols-1 lg:grid-cols-[1fr,360px] gap-6'>
+			<div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
 				<section className='rounded-xl ring-1 ring-slate-200 bg-white order-1 lg:order-none'>
 					<div className='px-4 py-3 border-b text-sm font-semibold text-slate-800'>Billing details</div>
 					<div className='p-4 grid grid-cols-1 md:grid-cols-2 gap-4'>

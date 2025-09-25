@@ -27,7 +27,7 @@ export default function ProductListPage() {
 				</div>
 			</div>
 
-			<div className='grid grid-cols-1 md:grid-cols-[260px,1fr] gap-6'>
+			<div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 				{/* Sidebar filters */}
 				<aside className='space-y-6'>
 					<PriceFilter />

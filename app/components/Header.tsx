@@ -1,4 +1,4 @@
-import { Menu, Search, SlidersHorizontal, User, ShoppingCart, ChevronDown, ShoppingBag } from 'lucide-react';
+import { Menu, Search, SlidersHorizontal, User, ShoppingCart, ShoppingBag } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 
@@ -56,45 +56,9 @@ export default function Header() {
 			</div>
 
 			{/* Categories bar */}
-			<nav className='bg-white border-t border-slate-100'>
-				<div className='max-w-screen-2xl mx-auto w-full px-3 sm:px-6 lg:px-8'>
-					<div className='hidden md:flex flex-wrap gap-2 py-2'>
-						<CategoryPill label='Groceries' active />
-						<CategoryPill label='Premium Fruits' />
-						<CategoryPill label='Home & Kitchen' />
-						<CategoryPill label='Fashion' />
-						<CategoryPill label='Electronics' />
-						<CategoryPill label='Beauty' />
-						<CategoryPill label='Home Improvement' />
-						<CategoryPill label='Sports, Toys & Luggage' />
-            <CategoryPill label='Sports, Toys & Luggage' />
-					</div>
-					{/* Mobile: horizontal scroll pills */}
-					<div className='md:hidden py-2 -mx-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden'>
-						<div className='flex gap-2 px-3 w-max'>
-							<CategoryPill label='Groceries' active />
-							<CategoryPill label='Fruits' />
-							<CategoryPill label='Home' />
-							<CategoryPill label='Fashion' />
-							<CategoryPill label='Electronics' />
-              <CategoryPill label='Sports, Toys & Luggage' />
-						</div>
-					</div>
-				</div>
-			</nav>
+			
 		</header>
     </div>
 	);
 }
 
-function CategoryPill({ label, active = false }: { label: string; active?: boolean }) {
-	return (
-		<Button
-			variant={active ? 'default' : 'outline'}
-			className={`h-9 rounded-full gap-1 ${active ? 'bg-blue-600 hover:bg-blue-600 text-white border-blue-600' : ''}`}
-		>
-			<span className='text-sm'>{label}</span>
-			<ChevronDown className={`h-4 w-4 ${active ? 'text-white' : 'text-slate-400'}`} />
-		</Button>
-	);
-}
