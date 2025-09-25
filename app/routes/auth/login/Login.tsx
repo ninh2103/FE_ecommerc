@@ -9,7 +9,7 @@ export default function LoginPage() {
 				{/* Tabs */}
 				<div className='flex items-center justify-center gap-6 mb-6'>
 					<h1 className='text-2xl font-extrabold text-slate-900'>Login</h1>
-					<Link to='/auth/register' className='text-2xl font-semibold text-slate-400 hover:text-slate-600'>Register</Link>
+					<Link to='/register' className='text-2xl font-semibold text-slate-400 hover:text-slate-600'>Register</Link>
 				</div>
 
 				<p className='text-center text-xs text-slate-600 mb-6'>If you have an account, sign in with your username or email address.</p>

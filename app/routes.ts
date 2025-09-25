@@ -13,7 +13,7 @@ export default [
 			{ path: 'profile', file: 'routes/pages/profile/Profile.tsx' },
 			{ path: 'login', file: 'routes/auth/login/Login.tsx' },
 			{ path: 'register', file: 'routes/auth/register/Register.tsx' },
-			{ path: 'forgot', file: 'routes/auth/forgot/ForgotPassword.tsx' },
+			{ path: 'forgot-password', file: 'routes/auth/forgot/ForgotPassword.tsx' },
 		],
 	},
 ] satisfies RouteConfig;
