@@ -1,5 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { profileApi } from "~/apiRequest/profile"
+import type { ChangePasswordBodyType } from "~/validateSchema/auth.schema"
+import type { MessageResponseType } from "~/validateSchema/message.schema"
 import type { GetUserProfileResponseType, UpdateUserProfileBodyType } from "~/validateSchema/profile.chema"
 
 interface ProfileState {
@@ -24,6 +26,10 @@ export const updateProfile = createAsyncThunk<GetUserProfileResponseType, Update
   return response
 })
 
+export const changePassword = createAsyncThunk<MessageResponseType, ChangePasswordBodyType>('profile/changePassword', async (body) => {
+  const response = await profileApi.changePassword(body)
+  return response
+})
 
 export const profileSlice = createSlice({
   name: 'profile',
@@ -58,6 +64,18 @@ export const profileSlice = createSlice({
       .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message || 'Update profile failed'
+      })
+      .addCase(changePassword.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(changePassword.fulfilled, (state) => {
+        state.loading = false
+        state.error = null
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message || 'Change password failed'
       })
   }
 })

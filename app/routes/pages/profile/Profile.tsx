@@ -1,13 +1,20 @@
 import { Link } from 'react-router'
 import { Button } from '../../../components/ui/button'
-import { fetchProfile } from '~/features/profileSlice'
-import { useEffect } from 'react'
+import { changePassword, fetchProfile, updateProfile } from '~/features/profileSlice'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '~/store'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Input } from '~/components/ui/input'
 import { Upload } from 'lucide-react'
 import { uploadMedia } from '~/features/mediaSlice'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { UpdateUserProfileBodySchema, type UpdateUserProfileBodyType } from '~/validateSchema/profile.chema'
+import { useForm } from 'react-hook-form'
+import { handleErrorApi } from '~/lib/utils'
+import { LoadingSpinner } from '~/components/ui/loading-spinner'
+import { toast } from 'sonner'
+import { ChangePasswordBodySchema, type ChangePasswordBodyType } from '~/validateSchema/auth.schema'
 
 
 
@@ -15,6 +22,7 @@ export default function ProfilePage() {
   const dispatch = useDispatch<AppDispatch>()
   const profile = useSelector((state: RootState) => state.profile.profile)
   const media = useSelector((state: RootState) => state.media)
+  const [activeTab, setActiveTab] = useState<'update' | 'password'>('update')
   useEffect(() => {
     dispatch(fetchProfile())
   }, [dispatch])
@@ -23,9 +31,73 @@ export default function ProfilePage() {
       try {
         dispatch(uploadMedia({ file: file }))
     } catch (error) {
-      console.log(error)
+      handleErrorApi<any>({
+        error: error as any,
+        setError: setError
+      })
     }
   }
+
+  const { register, handleSubmit, formState: { errors, isSubmitting }, setError, setValue, watch } = useForm<UpdateUserProfileBodyType>({
+    resolver: zodResolver(UpdateUserProfileBodySchema),
+    defaultValues: {
+      name: '',
+      phoneNumber: '',
+      avatar: ''
+    }
+  })
+
+  const { register: registerPwd, handleSubmit: handleSubmitPwd, formState: { errors: errorsPwd, isSubmitting: isSubmittingPwd }, setError: setErrorPwd, reset: resetPwd } = useForm<ChangePasswordBodyType>({
+    resolver: zodResolver(ChangePasswordBodySchema),
+    defaultValues: {
+      password: '',
+      newPassword: '',
+      confirmPassword: ''
+    }
+  })
+
+  const onSubmitPwd = async (body: ChangePasswordBodyType) => {
+    try {
+      dispatch(changePassword(body))
+      toast('Password changed successfully!')
+      resetPwd()
+    } catch (error) {
+      handleErrorApi<ChangePasswordBodyType>({
+        error: error as any,
+        setError: setErrorPwd
+      })
+    }
+  }
+
+  useEffect(() => {
+    if (profile) {
+      setValue('name', profile.name ?? '')
+      setValue('phoneNumber', profile.phoneNumber ?? '')
+      setValue('avatar', profile.avatar ?? '')
+    }
+  }, [profile, setValue])
+
+  useEffect(() => {
+    if (media.url) {
+      setValue('avatar', media.url)
+    }
+  }, [media.url, setValue])
+
+  const onSubmit = async (body:UpdateUserProfileBodyType)=>{
+    try {
+      dispatch(updateProfile(body))
+      toast('Updated Account Success !')
+    } catch (error) {
+      handleErrorApi<UpdateUserProfileBodyType>({
+        error: error as any,
+        setError: setError
+      })
+    }
+  }
+
+
+
+  
 
 	const inputCls = 'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400'
 	return (
@@ -42,21 +114,27 @@ export default function ProfilePage() {
 				<aside className='rounded-xl ring-1 ring-slate-200 bg-white h-max order-2 lg:order-none lg:sticky lg:top-28'>
 					<div className='px-4 py-4 flex items-center gap-3 border-b'>
 						<div className='h-9 w-9 rounded-full bg-slate-100 grid place-items-center text-slate-600 font-semibold'>
-							<span>👤</span>
+              {profile?.avatar ? <AvatarImage src={profile.avatar} /> : <span>👤</span>}
 						</div>
 						<div>
-							<p className='text-xs text-slate-500'>Welcome back{profile?.name ? ',' : ''}</p>
 							<p className='text-sm font-medium text-slate-900'>{profile?.name ?? 'Guest'}</p>
 							{profile?.email && <p className='text-xs text-slate-500'>{profile.email}</p>}
 						</div>
 					</div>
 					<nav className='py-2'>
 						<ul className='text-sm'>
-							{['Dashboard','Orders','Downloads','Addresses','Account details','Wishlist','Compare'].map((item) => (
-								<li key={item} className='px-4'>
-									<a href='#' className='block px-3 py-2 rounded-md hover:bg-slate-50 text-slate-700'>
-										{item}
-									</a>
+							{[
+								{ key: 'update', label: 'Update Account' },
+								{ key: 'password', label: 'Change Password' },
+							].map((item) => (
+								<li key={item.key} className='px-4'>
+									<button
+										type='button'
+										onClick={() => setActiveTab(item.key as 'update' | 'password')}
+										className={`w-full text-left block px-3 py-2 rounded-md transition-colors ${activeTab === item.key ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-700 hover:bg-slate-50'}`}
+									>
+										{item.label}
+									</button>
 								</li>
 							))}
 						</ul>
@@ -67,69 +145,102 @@ export default function ProfilePage() {
 				</aside>
 
 				{/* Main form */}
-				<section className='rounded-xl ring-1 ring-slate-200 bg-white order-1 lg:order-none'>
-					<div className='px-4 py-4 border-b'>
-						<h2 className='text-sm md:text-base font-semibold text-slate-900'>Update account</h2>
-					</div>
-					<div className='p-4 grid grid-cols-1 gap-4'>
-						<div className='grid grid-cols-1 gap-4'>
-							<Field label='Name *'>
-								<input className={inputCls} value={profile?.name} />
+				{activeTab === 'update' && (
+					<section className='rounded-xl ring-1 ring-slate-200 bg-white order-1 lg:order-none'>
+						<div className='px-4 py-4 border-b'>
+							<h2 className='text-sm md:text-base font-semibold text-slate-900'>Update account</h2>
+						</div>
+						<div className='p-4 grid grid-cols-1 gap-4'>
+							<div className='grid grid-cols-1 gap-4'>
+								<Field label='Name *'>
+									<input className={inputCls} {...register('name')} />
+									{errors.name && <p className='text-xs text-red-600 mt-1'>{errors.name.message}</p>}
+								</Field>
+							</div>
+
+							<Field label='Phone Number*'>
+								<input className={inputCls} {...register('phoneNumber')} />
+								{errors.phoneNumber && <p className='text-xs text-red-600 mt-1'>{errors.phoneNumber.message}</p>}
 							</Field>
+
+							<div className='flex items-center gap-6'>
+								<div className='flex gap-2 items-start justify-start'>
+										<Avatar className='aspect-square w-[100px] h-[100px] rounded-md object-cover'>
+											<AvatarImage src={media.url || profile?.avatar || ''} />
+											<AvatarFallback className='rounded-none'>{profile?.name || 'Avatar'}</AvatarFallback>
+										</Avatar>
+										<Input
+											type='file'
+											accept='image/*'
+											onChange={(e) => {
+												const file = e.target.files?.[0]
+												if (file) {
+													handleUploadAvatar(file)
+												}
+											}}
+											className='hidden'
+										/>
+										<button
+											className='flex aspect-square w-[100px] items-center justify-center rounded-md border border-dashed'
+											type='button'
+											onClick={() => {
+												const input = document.createElement('input')
+												input.type = 'file'
+												input.accept = 'image/*'
+												input.onchange = (e) => {
+													const file = (e.target as HTMLInputElement).files?.[0]
+													if (file) {
+														handleUploadAvatar(file)
+													}
+												}
+												input.click()
+											}}
+										>
+											<Upload className='h-4 w-4 text-muted-foreground' />
+											<span className='sr-only'>Tải lên</span>
+										</button>
+								</div>
+							</div>
+
+							<Field label='Avatar URL'>
+								<input className={inputCls} value={watch('avatar')} readOnly {...register('avatar')} />
+								{errors.avatar && <p className='text-xs text-red-600 mt-1'>{errors.avatar.message}</p>}
+							</Field>
+							
+							<div>
+								<Button variant='outline' className='text-slate-900' onClick={handleSubmit(onSubmit)} disabled={isSubmitting}>{isSubmitting ? <LoadingSpinner /> : 'Update'}</Button>
+							</div>
 						</div>
+					</section>
+				)}
 
-						<Field label='Phone Number*'>
-							<input className={inputCls} value={profile?.phone} />
-						</Field>
-
-            <div className='flex items-center gap-6'>
-              <div className='flex gap-2 items-start justify-start'>
-                    <Avatar className='aspect-square w-[100px] h-[100px] rounded-md object-cover'>
-                      <AvatarImage src={media.url || profile?.avatar || ''} />
-                      <AvatarFallback className='rounded-none'>{profile?.name || 'Avatar'}</AvatarFallback>
-                    </Avatar>
-                    <Input
-                      type='file'
-                      accept='image/*'
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) {
-                          handleUploadAvatar(file)
-                        }
-                      }}
-                      className='hidden'
-                    />
-                    <button
-                      className='flex aspect-square w-[100px] items-center justify-center rounded-md border border-dashed'
-                      type='button'
-                      onClick={() => {
-                        const input = document.createElement('input')
-                        input.type = 'file'
-                        input.accept = 'image/*'
-                        input.onchange = (e) => {
-                          const file = (e.target as HTMLInputElement).files?.[0]
-                          if (file) {
-                            handleUploadAvatar(file)
-                          }
-                        }
-                        input.click()
-                      }}
-                    >
-                      <Upload className='h-4 w-4 text-muted-foreground' />
-                      <span className='sr-only'>Tải lên</span>
-                    </button>
-                  </div>
-                </div>
-
-						<Field label='Avatar URL'>
-							<input className={inputCls} value={media.url || profile?.avatar || ''} readOnly />
-						</Field>
-						
-						<div>
-							<Button variant='outline' className='text-slate-900'>Become a Vendor</Button>
+				{activeTab === 'password' && (
+					<section className='rounded-xl ring-1 ring-slate-200 bg-white order-1 lg:order-none'>
+						<div className='px-4 py-4 border-b'>
+							<h2 className='text-sm md:text-base font-semibold text-slate-900'>Change password</h2>
 						</div>
-					</div>
-				</section>
+						<div className='p-4 grid grid-cols-1 gap-4'>
+							<Field label='Current password *'>
+								<input className={inputCls} type='password' {...registerPwd('password', { required: 'Current password is required' })} />
+								{errorsPwd.password && <p className='text-xs text-red-600 mt-1'>{errorsPwd.password.message}</p>}
+							</Field>
+
+							<Field label='New password *'>
+								<input className={inputCls} type='password' {...registerPwd('newPassword', { required: 'New password is required', minLength: { value: 6, message: 'At least 6 characters' } })} />
+								{errorsPwd.newPassword && <p className='text-xs text-red-600 mt-1'>{errorsPwd.newPassword.message}</p>}
+							</Field>
+
+							<Field label='Confirm new password *'>
+								<input className={inputCls} type='password' {...registerPwd('confirmPassword', { required: 'Confirm password is required' })} />
+								{errorsPwd.confirmPassword && <p className='text-xs text-red-600 mt-1'>{errorsPwd.confirmPassword.message}</p>}
+							</Field>
+
+							<div>
+								<Button variant='outline' className='text-slate-900' onClick={handleSubmitPwd(onSubmitPwd)} disabled={isSubmittingPwd}>{isSubmittingPwd ? <LoadingSpinner /> : 'Change password'}</Button>
+							</div>
+						</div>
+					</section>
+				)}
 			</div>
 		</div>
 	)

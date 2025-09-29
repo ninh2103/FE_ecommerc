@@ -83,3 +83,24 @@ export const ForgotPasswordBodySchema = z
   })
 
 export type ForgotPasswordBodyType = z.infer<typeof ForgotPasswordBodySchema>
+
+export const ChangePasswordBodySchema = z.object({
+  password:z.string(),
+  newPassword:z.string(),
+  confirmPassword:z.string()
+}).superRefine((data,ctx)=>{
+  if(data.newPassword !== data.confirmPassword){
+      ctx.addIssue({
+          code:z.ZodIssueCode.custom,
+          message:"Password and confirm password do not match"
+      })
+  }
+})
+
+export type ChangePasswordBodyType = z.infer<typeof ChangePasswordBodySchema>
+
+export const LogoutBodySchema = z.object({
+  refreshToken: z.string(),
+})
+
+export type LogoutBodyType = z.infer<typeof LogoutBodySchema>
