@@ -104,3 +104,19 @@ export const LogoutBodySchema = z.object({
 })
 
 export type LogoutBodyType = z.infer<typeof LogoutBodySchema>
+
+export const Enable2FABodySchema = z.object({
+})
+
+export type Enable2FABodyType = z.infer<typeof Enable2FABodySchema>
+
+export const Enable2FAResponseSchema = z.object({
+  secret: z.string(),
+  uri: z.string(),
+})
+export type Enable2FAResponseType = z.infer<typeof Enable2FAResponseSchema>
+
+export const Disable2FABodySchema = z.object({
+  totpCode: z.string().length(6),
+})
+export type Disable2FABodyType = z.infer<typeof Disable2FABodySchema>

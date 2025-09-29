@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { Button } from '../../../components/ui/button'
 import { changePassword, fetchProfile, updateProfile } from '~/features/profileSlice'
 import { useEffect, useState } from 'react'
@@ -15,14 +15,20 @@ import { handleErrorApi } from '~/lib/utils'
 import { LoadingSpinner } from '~/components/ui/loading-spinner'
 import { toast } from 'sonner'
 import { ChangePasswordBodySchema, type ChangePasswordBodyType } from '~/validateSchema/auth.schema'
-
+import { fetchEnable2FA, fetchLogout } from '~/features/authSlice'
+import { getRefreshTokenFromLS, removeAccessTokenFromLS, removeRefreshTokenFromLS, removeUserFromLS } from '~/share/store'
+import { Switch } from '~/components/ui/switch'
+import QRCode from 'qrcode'
 
 
 export default function ProfilePage() {
   const dispatch = useDispatch<AppDispatch>()
+  const navigate = useNavigate()
   const profile = useSelector((state: RootState) => state.profile.profile)
   const media = useSelector((state: RootState) => state.media)
-  const [activeTab, setActiveTab] = useState<'update' | 'password'>('update')
+  const [activeTab, setActiveTab] = useState<'update' | 'password'|'security'>('update')
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false)
+  const [qrCodeUrl, setQrCodeUrl] = useState('')
   useEffect(() => {
     dispatch(fetchProfile())
   }, [dispatch])
@@ -83,6 +89,29 @@ export default function ProfilePage() {
     }
   }, [media.url, setValue])
 
+  // Auto-enable 2FA and show QR if profile has totpSecret
+  useEffect(() => {
+    const setupQrFromProfile = async () => {
+      if (profile && profile.totpSecret) {
+        try {
+          setIs2FAEnabled(true)
+          const issuer = 'EcommerceApp'
+          const label = `${issuer}:${profile.email}`
+          const uri = (profile as any).otpAuthUri ?? `otpauth://totp/${encodeURIComponent(label)}?secret=${profile.totpSecret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`
+          const dataUrl = await QRCode.toDataURL(uri)
+          setQrCodeUrl(dataUrl)
+        } catch {
+          // If QR generation fails, keep switch on but clear QR image
+          setQrCodeUrl('')
+        }
+      } else {
+        setIs2FAEnabled(false)
+        setQrCodeUrl('')
+      }
+    }
+    setupQrFromProfile()
+  }, [profile])
+
   const onSubmit = async (body:UpdateUserProfileBodyType)=>{
     try {
       dispatch(updateProfile(body))
@@ -92,6 +121,45 @@ export default function ProfilePage() {
         error: error as any,
         setError: setError
       })
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      dispatch(fetchLogout({ refreshToken: getRefreshTokenFromLS() }))
+      removeRefreshTokenFromLS()
+      removeAccessTokenFromLS()
+      removeUserFromLS()
+      toast('Logout successfully!')
+      navigate('/login')
+    } catch (error) {
+      handleErrorApi<any>({
+        error: error as any,
+        setError: setError
+      })
+    }
+  }
+
+  const handleToggle2FA = async (checked: boolean) => {
+    try {
+      setIs2FAEnabled(checked)
+      if (checked) {
+        const resp = await dispatch(fetchEnable2FA({})).unwrap()
+        if (resp?.uri) {
+          const dataUrl = await QRCode.toDataURL(resp.uri)
+          setQrCodeUrl(dataUrl)
+          toast('2FA enabled. Scan the QR with your authenticator app.')
+        }
+      } else {
+        setQrCodeUrl('')
+      }
+    } catch (error) {
+      handleErrorApi<any>({
+        error: error as any,
+        setError: setError
+      })
+      setIs2FAEnabled(false)
+      setQrCodeUrl('')
     }
   }
 
@@ -126,11 +194,12 @@ export default function ProfilePage() {
 							{[
 								{ key: 'update', label: 'Update Account' },
 								{ key: 'password', label: 'Change Password' },
+								{ key: 'security', label: 'Two-Factor Authentication (2FA)' },
 							].map((item) => (
 								<li key={item.key} className='px-4'>
 									<button
 										type='button'
-										onClick={() => setActiveTab(item.key as 'update' | 'password')}
+										onClick={() => setActiveTab(item.key as 'update' | 'password' | 'security')}
 										className={`w-full text-left block px-3 py-2 rounded-md transition-colors ${activeTab === item.key ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-700 hover:bg-slate-50'}`}
 									>
 										{item.label}
@@ -139,7 +208,7 @@ export default function ProfilePage() {
 							))}
 						</ul>
 						<div className='px-4 py-2 border-t mt-2'>
-							<button className='w-full text-left px-3 py-2 rounded-md hover:bg-slate-50 text-sm text-rose-600'>Log out</button>
+							<button className='w-full text-left px-3 py-2 rounded-md hover:bg-slate-50 text-sm text-rose-600' onClick={handleLogout}>Log out</button>
 						</div>
 					</nav>
 				</aside>
@@ -238,6 +307,34 @@ export default function ProfilePage() {
 							<div>
 								<Button variant='outline' className='text-slate-900' onClick={handleSubmitPwd(onSubmitPwd)} disabled={isSubmittingPwd}>{isSubmittingPwd ? <LoadingSpinner /> : 'Change password'}</Button>
 							</div>
+						</div>
+					</section>
+				)}
+
+				{activeTab === 'security' && (
+					<section className='rounded-xl ring-1 ring-slate-200 bg-white order-1 lg:order-none'>
+						<div className='px-4 py-4 border-b'>
+							<h2 className='text-sm md:text-base font-semibold text-slate-900'>Two-Factor Authentication (2FA)</h2>
+						</div>
+						<div className='p-4 grid grid-cols-1 gap-4'>
+							<div className='flex items-center justify-between rounded-md border px-3 py-2'>
+								<div>
+									<p className='text-sm font-medium text-slate-900'>Enable 2FA</p>
+									<p className='text-xs text-slate-500'>Protect your account by requiring a code from an authenticator app.</p>
+								</div>
+								<Switch checked={is2FAEnabled} onCheckedChange={handleToggle2FA} />
+							</div>
+
+							{is2FAEnabled && (
+								<div className='rounded-md border p-4'>
+									<p className='text-sm text-slate-700 mb-3'>Scan this QR code with Google Authenticator, 1Password, or Authy:</p>
+									{qrCodeUrl ? (
+										<img src={qrCodeUrl} alt='2FA QR Code' className='w-40 h-40' />
+									) : (
+										<p className='text-xs text-slate-500'>Generating QR code...</p>
+									)}
+								</div>
+							)}
 						</div>
 					</section>
 				)}

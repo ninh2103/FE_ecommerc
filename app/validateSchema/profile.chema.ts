@@ -7,6 +7,7 @@ export const GetUserProfileSchema = z.object({
   phoneNumber: z.string(),
   address: z.string(),
   avatar: z.string(),
+  totpSecret: z.string().nullable().optional(),
 })
 
 export type GetUserProfileResponseType = z.infer<typeof GetUserProfileSchema>
