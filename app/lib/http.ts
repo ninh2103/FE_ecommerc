@@ -55,8 +55,6 @@ axiosClient.interceptors.response.use(
         { headers: { 'Content-Type': 'application/json' } }
       )
 
-      console.log('refreshResponse', refreshResponse)
-
       if (refreshResponse.status === HttpStatusCode.Ok) {
         const { accessToken } = refreshResponse.data
         if (!accessToken) {

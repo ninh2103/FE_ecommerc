@@ -1,8 +1,33 @@
 import { Link } from 'react-router'
 import { Button } from '../../../components/ui/button'
+import { fetchProfile } from '~/features/profileSlice'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import type { AppDispatch, RootState } from '~/store'
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
+import { Input } from '~/components/ui/input'
+import { Upload } from 'lucide-react'
+import { uploadMedia } from '~/features/mediaSlice'
+
+
 
 export default function ProfilePage() {
-	const inputCls = 'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2'
+  const dispatch = useDispatch<AppDispatch>()
+  const profile = useSelector((state: RootState) => state.profile.profile)
+  const media = useSelector((state: RootState) => state.media)
+  useEffect(() => {
+    dispatch(fetchProfile())
+  }, [dispatch])
+
+  const handleUploadAvatar = (file: File) => {
+      try {
+        dispatch(uploadMedia({ file: file }))
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+	const inputCls = 'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400'
 	return (
 		<div className='container mx-auto px-4 py-6 md:py-8'>
 			{/* Breadcrumbs */}
@@ -20,8 +45,9 @@ export default function ProfilePage() {
 							<span>👤</span>
 						</div>
 						<div>
-							<p className='text-xs text-slate-500'>Welcome back,</p>
-							<p className='text-sm font-medium text-slate-900'>name@gmail.com</p>
+							<p className='text-xs text-slate-500'>Welcome back{profile?.name ? ',' : ''}</p>
+							<p className='text-sm font-medium text-slate-900'>{profile?.name ?? 'Guest'}</p>
+							{profile?.email && <p className='text-xs text-slate-500'>{profile.email}</p>}
 						</div>
 					</div>
 					<nav className='py-2'>
@@ -43,40 +69,62 @@ export default function ProfilePage() {
 				{/* Main form */}
 				<section className='rounded-xl ring-1 ring-slate-200 bg-white order-1 lg:order-none'>
 					<div className='px-4 py-4 border-b'>
-						<h2 className='text-sm md:text-base font-semibold text-slate-900'>Update account to Vendor</h2>
+						<h2 className='text-sm md:text-base font-semibold text-slate-900'>Update account</h2>
 					</div>
 					<div className='p-4 grid grid-cols-1 gap-4'>
-						<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-							<Field label='First Name *'>
-								<input className={inputCls} />
-							</Field>
-							<Field label='Last Name *'>
-								<input className={inputCls} />
+						<div className='grid grid-cols-1 gap-4'>
+							<Field label='Name *'>
+								<input className={inputCls} value={profile?.name} />
 							</Field>
 						</div>
 
-						<Field label='Last Name *'>
-							<input className={inputCls} />
-						</Field>
-
-						<Field label='Shop Name *'>
-							<input className={inputCls} />
-						</Field>
-
-						<Field label='Shop URL *'>
-							<input className={inputCls} defaultValue='shawonetcc42fdgqf@gmail.com' />
-							<p className='mt-1 text-[11px] text-slate-400'>https://klbtheme.com/grogin/store/</p>
-						</Field>
-
 						<Field label='Phone Number*'>
-							<input className={inputCls} />
+							<input className={inputCls} value={profile?.phone} />
 						</Field>
 
-						<label className='flex items-center gap-2 text-xs text-slate-600'>
-							<input type='checkbox' />
-							<span>I have read and agree to the <a href='#' className='underline'>Terms & Conditions</a>.</span>
-						</label>
+            <div className='flex items-center gap-6'>
+              <div className='flex gap-2 items-start justify-start'>
+                    <Avatar className='aspect-square w-[100px] h-[100px] rounded-md object-cover'>
+                      <AvatarImage src={media.url || profile?.avatar || ''} />
+                      <AvatarFallback className='rounded-none'>{profile?.name || 'Avatar'}</AvatarFallback>
+                    </Avatar>
+                    <Input
+                      type='file'
+                      accept='image/*'
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          handleUploadAvatar(file)
+                        }
+                      }}
+                      className='hidden'
+                    />
+                    <button
+                      className='flex aspect-square w-[100px] items-center justify-center rounded-md border border-dashed'
+                      type='button'
+                      onClick={() => {
+                        const input = document.createElement('input')
+                        input.type = 'file'
+                        input.accept = 'image/*'
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0]
+                          if (file) {
+                            handleUploadAvatar(file)
+                          }
+                        }
+                        input.click()
+                      }}
+                    >
+                      <Upload className='h-4 w-4 text-muted-foreground' />
+                      <span className='sr-only'>Tải lên</span>
+                    </button>
+                  </div>
+                </div>
 
+						<Field label='Avatar URL'>
+							<input className={inputCls} value={media.url || profile?.avatar || ''} readOnly />
+						</Field>
+						
 						<div>
 							<Button variant='outline' className='text-slate-900'>Become a Vendor</Button>
 						</div>
@@ -92,6 +140,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 		<div>
 			<label className='block text-xs text-slate-700 mb-1'>{label}</label>
 			{children}
-		</div>
+			</div>
 	)
 }

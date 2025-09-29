@@ -1,8 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { authSlice } from '~/features/authSlice'
+import { profileSlice } from './features/profileSlice'
+import { mediaSlice } from './features/mediaSlice'
 
 export const store = configureStore({
-  reducer: { auth: authSlice.reducer },
+  reducer: { auth: authSlice.reducer, profile: profileSlice.reducer, media: mediaSlice.reducer },
   
 })
 
