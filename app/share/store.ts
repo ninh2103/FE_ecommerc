@@ -1,39 +1,40 @@
+import type { UserResponseType } from "~/lib/type"
 
 export const LocalStorageEventTarget = new EventTarget()
 
-export const setAccessTokenToLS = (access_token: string) => {
-  localStorage.setItem('access_token', access_token)
+export const setAccessTokenToLS = (accessToken: string) => {
+  localStorage.setItem('accessToken', accessToken)
 }
 
-export const setRefreshTokenToLS = (refresh_token: string) => {
-  localStorage.setItem('refresh_token', refresh_token)
+export const setRefreshTokenToLS = (refreshToken: string) => {
+  localStorage.setItem('refreshToken', refreshToken)
 }
 
 export const clearLS = () => {
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('refresh_token')
+  localStorage.removeItem('accessToken')
+  localStorage.removeItem('refreshToken')
   localStorage.removeItem('user')
   const clearLSEvent = new Event('clearLS')
   LocalStorageEventTarget.dispatchEvent(clearLSEvent)
 }
 
-export const getAccessTokenFromLS = () => localStorage.getItem('access_token') || ''
+export const getAccessTokenFromLS = () => localStorage.getItem('accessToken') || ''
 
-export const getRefreshTokenFromLS = () => localStorage.getItem('refresh_token') || ''
+export const getRefreshTokenFromLS = () => localStorage.getItem('refreshToken') || ''
 
-// export const getUserFromLocalStorage = (): UserResponseType | null => {
-//   const user = localStorage.getItem('user')
-//   return user ? JSON.parse(user) : null
-// }
+export const getUserFromLocalStorage = (): UserResponseType | null => {
+  const user = localStorage.getItem('user')
+  return user ? JSON.parse(user) : null
+}
 export const removeAccessTokenFromLS = () => {
-  localStorage.removeItem('access_token')
+  localStorage.removeItem('accessToken')
 }
 
 export const removeRefreshTokenFromLS = () => {
-  localStorage.removeItem('refresh_token')
+  localStorage.removeItem('refreshToken')
 }
 
-export const setUserToLS = (user: { id: string; name: string; email: string; role: string; isVerified: boolean }) => {
+export const setUserToLS = (user: { id: number; name: string; email: string; role: number }) => {
   localStorage.setItem('user', JSON.stringify(user))
 }
 export const removeUserFromLS = () => {

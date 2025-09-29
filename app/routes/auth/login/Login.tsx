@@ -7,10 +7,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { fetchLogin } from '~/features/authSlice'
 import type { LoginResponseType } from '~/validateSchema/auth.schema'
-import { setAccessTokenToLS, setRefreshTokenToLS } from '~/share/store'
+import { setAccessTokenToLS, setRefreshTokenToLS, setUserToLS } from '~/share/store'
 import { handleErrorApi } from '~/lib/utils'
 import { toast } from 'sonner'
 import { PATH } from '~/constant/path'
+import { LoadingSpinner } from '~/components/ui/loading-spinner'
 
 
 
@@ -30,9 +31,15 @@ const navigate = useNavigate()
   const onSubmit = async (body:LoginBodyType)=>{
     try {
       const res: LoginResponseType = await dispatch(fetchLogin(body)).unwrap()
-      const {accessToken,refreshToken} = res
+      const {accessToken,refreshToken,user} = res
       setAccessTokenToLS(accessToken)
       setRefreshTokenToLS(refreshToken)
+      setUserToLS({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.roleId
+      })
       toast('Đăng Nhập Thành Công!')
       navigate(PATH.HOME)
     } catch (err: unknown) {
@@ -74,7 +81,7 @@ const navigate = useNavigate()
 						<Link to='/auth/forgot' className='text-xs text-slate-500 hover:text-slate-700'>Lost your password?</Link>
 					</div>
 
-					<Button className='w-full h-10 bg-purple-600 hover:bg-purple-700 text-white' disabled={isSubmitting}>{isSubmitting ? 'Logging in...' : 'Log in'}</Button>
+					<Button className='w-full h-10 bg-purple-600 hover:bg-purple-700 text-white' disabled={isSubmitting}>{isSubmitting ? <LoadingSpinner /> : 'Log in'}</Button>
 				</form>
 			</div>
 		</div>

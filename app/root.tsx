@@ -12,6 +12,7 @@ import "./app.css";
 import { store } from "./store";
 import { Provider } from "react-redux";
 import { Toaster } from "sonner";
+import AutoScrollToTop from "./commom/autoScroll";
 
 
 export const links: Route.LinksFunction = () => [
@@ -49,7 +50,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <AutoScrollToTop />
+    </>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

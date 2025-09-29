@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { authApi } from "~/apiRequest/auth";
-import type { LoginBodyType, LoginResponseType, RegisterBodyType, RegisterResponseType, SendOTPBodyType } from "~/validateSchema/auth.schema";
+import type { ForgotPasswordBodyType, LoginBodyType, LoginResponseType, RegisterBodyType, RegisterResponseType, SendOTPBodyType } from "~/validateSchema/auth.schema";
 import type { MessageResponseType } from "~/validateSchema/message.schema";
 
 interface AuthState {
@@ -28,6 +28,14 @@ export const fetchSendOtpCode = createAsyncThunk<MessageResponseType,SendOTPBody
   'auth/fetchSendOtpCode',
   async (body) => {
     const response = await authApi.sendOtp(body)
+    return response
+  }
+)
+
+export const fetchForgotPassword = createAsyncThunk<MessageResponseType,ForgotPasswordBodyType>(
+  'auth/fetchForgotPassword',
+  async (body) => {
+    const response = await authApi.forgotPassword(body)
     return response
   }
 )
@@ -85,6 +93,17 @@ export const authSlice = createSlice({
       .addCase(fetchSendOtpCode.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message || 'Send OTP fail !'
+      })
+      .addCase(fetchForgotPassword.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchForgotPassword.fulfilled, (state) => {
+        state.loading = false
+      })
+      .addCase(fetchForgotPassword.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message || 'Forgot password fail !'
       })
 
   }

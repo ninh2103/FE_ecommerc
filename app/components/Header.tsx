@@ -1,8 +1,14 @@
 import { Menu, Search, SlidersHorizontal, User, ShoppingCart, ShoppingBag } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { getUserFromLocalStorage } from '~/share/store';
+import { PATH } from '~/constant/path';
+import { useNavigate } from 'react-router';
 
 export default function Header() {
+  const navigate = useNavigate()
+  const user = getUserFromLocalStorage()
+  const isLogin = !!user
 	return (
     <div className='fixed top-0 left-0 right-0 z-50'>
 		<header className='w-full shadow-sm'>
@@ -43,13 +49,13 @@ export default function Header() {
 					</div>
 
 					<div className='ml-auto flex items-center gap-2 sm:gap-4 '>
-						<Button variant='ghost' className='gap-2'>
+						<Button variant='ghost' className='gap-2' onClick={() => navigate(isLogin ? PATH.PROFILE : PATH.LOGIN)}>
 							<User className='h-5 w-5' />
-							<span className='hidden sm:inline text-sm'>Sign Up/Sign In</span>
+							<span className='hidden sm:inline text-sm'>{isLogin ? user?.name : 'Sign Up/Sign In'}</span>
 						</Button>
-						<Button variant='ghost' className='gap-2'>
+						<Button variant='ghost' className='gap-2' onClick={() => navigate(PATH.CART)}>
 							<ShoppingCart className='h-5 w-5' />
-							<span className='hidden sm:inline text-sm'>Cart</span>
+							<span className='hidden sm:inline text-sm'>{isLogin ? 'Cart' : ''}</span>
 						</Button>
 					</div>
 				</div>

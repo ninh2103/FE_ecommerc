@@ -30,10 +30,16 @@ axiosClient.interceptors.response.use(
     return response.data
   },
   async (error) => {
-    const originalRequest = error.config
-    if (error.response.status === HttpStatusCode.Unauthorized && !originalRequest._retry) {
-      originalRequest._retry = true     
+    const originalRequest = error?.config
+    const status = error?.response?.status
+
+    // Only handle 401 once per request
+    if (status !== HttpStatusCode.Unauthorized || (originalRequest as any)?._retry) {
+      return Promise.reject(error)
     }
+
+    ;(originalRequest as any)._retry = true
+
     try {
       const refreshToken = getRefreshTokenFromLS()
       if (!refreshToken) {
@@ -41,21 +47,35 @@ axiosClient.interceptors.response.use(
         removeRefreshTokenFromLS()
         return Promise.reject(error)
       }
-      const response = await axiosClient.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-token`, { refreshToken })
 
-      if (response.status === HttpStatusCode.Ok) {
-        const { accessToken } = response.data
+      // Use base axios (no interceptors) to avoid recursive interceptor calls and response shaping
+      const refreshResponse = await axios.post(
+        `${config.baseUrl}/auth/refresh-token`,
+        { refreshToken },
+        { headers: { 'Content-Type': 'application/json' } }
+      )
+
+      console.log('refreshResponse', refreshResponse)
+
+      if (refreshResponse.status === HttpStatusCode.Ok) {
+        const { accessToken } = refreshResponse.data
+        if (!accessToken) {
+          throw new Error('No access token returned from refresh endpoint')
+        }
         setAccessTokenToLS(accessToken)
+
+        originalRequest.headers = originalRequest.headers || {}
         originalRequest.headers.Authorization = `Bearer ${accessToken}`
         return axiosClient(originalRequest)
       }
-    } catch (error) {
+    } catch (refreshError) {
       removeAccessTokenFromLS()
       removeRefreshTokenFromLS()
       toast.error('Session expired')
       window.location.href = '/login'
-      return Promise.reject(error)
+      return Promise.reject(refreshError)
     }
+
     return Promise.reject(error)
   }
 )

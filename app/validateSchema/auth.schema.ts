@@ -11,6 +11,12 @@ export type LoginBodyType = z.infer<typeof LoginBodySchema>
 export const LoginResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
+  user: z.object({
+    id: z.number(),
+    name: z.string(),
+    roleId: z.number(),
+    email: z.string().email(),
+  }),
 })
 
 export type LoginResponseType = z.infer<typeof LoginResponseSchema>
@@ -50,3 +56,30 @@ export const SendOTPBodySchema = z.object({
 })
 
 export type SendOTPBodyType = z.infer<typeof SendOTPBodySchema>
+
+export const RefreshTokenBodySchema = z.object({
+  refreshToken: z.string(),
+})
+
+export type RefreshTokenBodyType = z.infer<typeof RefreshTokenBodySchema>
+export type RefreshTokenResponseType = LoginResponseType
+
+export const ForgotPasswordBodySchema = z
+  .object({
+    email: z.string().email(),
+    code: z.string().length(6),
+    newPassword: z.string().min(8),
+    confirmNewPassword: z.string().min(8),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.newPassword !== data.confirmNewPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Passwords do not match',
+        path: ['confirmNewPassword'],
+      })
+    }
+  })
+
+export type ForgotPasswordBodyType = z.infer<typeof ForgotPasswordBodySchema>

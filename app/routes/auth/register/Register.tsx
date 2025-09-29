@@ -7,6 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { fetchRegister, fetchSendOtpCode } from '~/features/authSlice'
 import { toast } from 'sonner'
+import { LoadingSpinner } from '~/components/ui/loading-spinner'
+import { handleErrorApi } from '~/lib/utils'
 
 export default function RegisterPage() {
 	const dispatch = useDispatch<AppDispatch>()
@@ -35,21 +37,19 @@ export default function RegisterPage() {
     try {
       const email = formRegister.getValues('email')
       formSendOTP.setValue('email', email, { shouldValidate: true, shouldDirty: true })
-      console.log('Email gửi đi:', formSendOTP.getValues().email)
 
   
       const isValid = await formSendOTP.trigger()
       if (!isValid) return
   
-      // unwrap sẽ trả về kết quả của API hoặc throw lỗi
-      const res = await dispatch(fetchSendOtpCode(formSendOTP.getValues())).unwrap()
+      await dispatch(fetchSendOtpCode(formSendOTP.getValues())).unwrap()
   
-      // Thành công
-      console.log('OTP gửi thành công:', res)
       toast.success('OTP đã được gửi đến email của bạn!')
-    } catch (error) {
-      // Lỗi từ API
-      console.error('Send OTP error:', error)
+    } catch (err: unknown) {
+      handleErrorApi<SendOTPBodyType>({
+        error: err as any,
+        setError: formSendOTP.setError
+      })
       toast.error('Gửi OTP thất bại, vui lòng thử lại!')
     }
   }
@@ -80,7 +80,7 @@ export default function RegisterPage() {
 						<label className='block text-xs text-slate-700 mb-1'>Email address *</label>
 						<div className='flex gap-2'>
 							<input type='email' className={`${inputCls} flex-1`} placeholder='' {...formRegister.register('email')} />
-							<Button type='button' onClick={handleSendOtp} className='shrink-0 h-9 px-3 bg-slate-900 hover:bg-slate-700 text-white'>Gửi</Button>
+							<Button type='button' onClick={handleSendOtp} className='shrink-0 h-9 px-3 bg-slate-900 hover:bg-slate-700 text-white'>{formSendOTP.formState.isSubmitting ? <LoadingSpinner /> : 'Send'}</Button>
 						</div>
 					</div>
 					<div>
@@ -105,7 +105,7 @@ export default function RegisterPage() {
 
 					<p className='text-xs text-slate-600'>Your personal data will be used to support your experience throughout this website, to manage access to your account, and for other purposes described in our <a className='underline' href='#'>privacy policy</a>.</p>
 
-					<Button type='submit' className='w-full h-10 bg-purple-600 hover:bg-purple-700 text-white mt-1'>Register</Button>
+					<Button type='submit' className='w-full h-10 bg-purple-600 hover:bg-purple-700 text-white mt-1'>{formRegister.formState.isSubmitting ? <LoadingSpinner /> : 'Register'}</Button>
 				</form>
 			</div>
 		</div>
