@@ -16,4 +16,21 @@ export default [
 			{ path: 'forgot-password', file: 'routes/auth/forgot/ForgotPassword.tsx' },
 		],
 	},
+	{
+		path: '/manage',
+		file: 'routes/manage/layout.tsx',
+		children: [
+			{ path: 'dashboard', file: 'routes/manage/dashboard/dashboard.tsx' },
+			{ path: 'product', file: 'routes/manage/product/index.tsx' },
+			{ path: 'category', file: 'routes/manage/category/index.tsx' },
+			{ path: 'order', file: 'routes/manage/order/index.tsx' },
+			{ path: 'payment', file: 'routes/manage/payment/index.tsx' },
+			{ path: 'brand', file: 'routes/manage/brand/index.tsx' },
+			{ path: 'account', file: 'routes/manage/account/index.tsx' },
+			{ path: 'role', file: 'routes/manage/role/index.tsx' },
+			{ path: 'permission', file: 'routes/manage/permission/index.tsx' },
+			{ path: 'setting', file: 'routes/manage/setting/setting.tsx' },
+			{ path: 'profile', file: 'routes/manage/profile/index.tsx' },
+		],
+	},
 ] satisfies RouteConfig;
