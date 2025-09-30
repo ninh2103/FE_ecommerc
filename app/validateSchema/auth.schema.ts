@@ -4,6 +4,7 @@ import { VerificationCodeType } from '~/constant/enum'
 export const LoginBodySchema = z.object({
   email: z.string().email('Email không hợp lệ'),
   password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
+  code: z.union([z.string().length(6, 'Mã OTP phải gồm 6 số'), z.literal('')]).transform((v) => (v === '' ? undefined : v)).optional(),
 })
 
 export type LoginBodyType = z.infer<typeof LoginBodySchema>
