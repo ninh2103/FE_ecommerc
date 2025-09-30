@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { authApi } from "~/apiRequest/auth";
-import type { Enable2FABodyType, Enable2FAResponseType, ForgotPasswordBodyType, LoginBodyType, LoginResponseType, LogoutBodyType, RegisterBodyType, RegisterResponseType, SendOTPBodyType } from "~/validateSchema/auth.schema";
+import type { Disable2FABodyType, Enable2FABodyType, Enable2FAResponseType, ForgotPasswordBodyType, LoginBodyType, LoginResponseType, LogoutBodyType, RegisterBodyType, RegisterResponseType, SendOTPBodyType } from "~/validateSchema/auth.schema";
 import type { MessageResponseType } from "~/validateSchema/message.schema";
 
 interface AuthState {
@@ -53,6 +53,14 @@ export const fetchEnable2FA = createAsyncThunk<Enable2FAResponseType,Enable2FABo
   'auth/fetchEnable2FA',
   async (body) => {
     const response = await authApi.enable2fa(body)
+    return response
+  }
+)
+
+export const fetchDisable2FA = createAsyncThunk<MessageResponseType,Disable2FABodyType>(
+  'auth/fetchDisable2FA',
+  async (body) => {
+    const response = await authApi.disable2fa(body)
     return response
   }
 )
@@ -143,6 +151,17 @@ export const authSlice = createSlice({
       .addCase(fetchEnable2FA.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message || 'Enable 2FA fail !'
+      })
+      .addCase(fetchDisable2FA.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchDisable2FA.fulfilled, (state) => {
+        state.loading = false
+      })
+      .addCase(fetchDisable2FA.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message || 'Disable 2FA fail !'
       })
   }
 })

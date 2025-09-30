@@ -14,8 +14,8 @@ import { useForm } from 'react-hook-form'
 import { handleErrorApi } from '~/lib/utils'
 import { LoadingSpinner } from '~/components/ui/loading-spinner'
 import { toast } from 'sonner'
-import { ChangePasswordBodySchema, type ChangePasswordBodyType } from '~/validateSchema/auth.schema'
-import { fetchEnable2FA, fetchLogout } from '~/features/authSlice'
+import { ChangePasswordBodySchema, SendOTPBodySchema, type ChangePasswordBodyType, type SendOTPBodyType, Disable2FABodySchema, type Disable2FABodyType } from '~/validateSchema/auth.schema'
+import { fetchDisable2FA, fetchEnable2FA, fetchLogout, fetchSendOtpCode } from '~/features/authSlice'
 import { getRefreshTokenFromLS, removeAccessTokenFromLS, removeRefreshTokenFromLS, removeUserFromLS } from '~/share/store'
 import { Switch } from '~/components/ui/switch'
 import QRCode from 'qrcode'
@@ -26,7 +26,7 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const profile = useSelector((state: RootState) => state.profile.profile)
   const media = useSelector((state: RootState) => state.media)
-  const [activeTab, setActiveTab] = useState<'update' | 'password'|'security'>('update')
+  const [activeTab, setActiveTab] = useState<'update' | 'password'|'security' | 'disable2fa'>('update')
   const [is2FAEnabled, setIs2FAEnabled] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState('')
   useEffect(() => {
@@ -59,6 +59,21 @@ export default function ProfilePage() {
       password: '',
       newPassword: '',
       confirmPassword: ''
+    }
+  })
+
+  const formSendOTP = useForm<SendOTPBodyType>({
+		resolver: zodResolver(SendOTPBodySchema),
+		defaultValues: {
+			email: profile?.email ?? '',
+			type: 'DISABLE_2FA',
+		},
+	})
+
+  const { register: registerDisable, handleSubmit: handleSubmitDisable, formState: { errors: errorsDisable, isSubmitting: isSubmittingDisable }, setError: setErrorDisable } = useForm<Disable2FABodyType>({
+    resolver: zodResolver(Disable2FABodySchema),
+    defaultValues: {
+      code: ''
     }
   })
 
@@ -163,9 +178,35 @@ export default function ProfilePage() {
     }
   }
 
+  const handleSendDisableOtp = async () => {
+    try {
+      formSendOTP.setValue('email', profile?.email ?? '', { shouldValidate: true, shouldDirty: true })
+      formSendOTP.setValue('type', 'DISABLE_2FA', { shouldValidate: true, shouldDirty: true })
+      const isValid = await formSendOTP.trigger()
+      if (!isValid) return
+      await dispatch(fetchSendOtpCode(formSendOTP.getValues())).unwrap()
+      toast.success('OTP đã được gửi đến email của bạn!')
+    } catch (err: unknown) {
+      handleErrorApi<SendOTPBodyType>({
+        error: err as any,
+        setError: formSendOTP.setError
+      })
+      toast.error('Gửi OTP thất bại, vui lòng thử lại!')
+    }
+  }
 
-
-  
+  const onSubmitDisable2FA = async (body: Disable2FABodyType) => {
+    try {
+      await dispatch(fetchDisable2FA(body)).unwrap()
+      toast('2FA disabled successfully!')
+      setActiveTab('update')
+    } catch (error) {
+      handleErrorApi<Disable2FABodyType>({
+        error: error as any,
+        setError: setErrorDisable
+      })
+    }
+  }
 
 	const inputCls = 'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400'
 	return (
@@ -182,7 +223,7 @@ export default function ProfilePage() {
 				<aside className='rounded-xl ring-1 ring-slate-200 bg-white h-max order-2 lg:order-none lg:sticky lg:top-28'>
 					<div className='px-4 py-4 flex items-center gap-3 border-b'>
 						<div className='h-9 w-9 rounded-full bg-slate-100 grid place-items-center text-slate-600 font-semibold'>
-              {profile?.avatar ? <AvatarImage src={profile.avatar} /> : <span>👤</span>}
+							{profile?.avatar ? <AvatarImage src={profile.avatar} /> : <span>👤</span>}
 						</div>
 						<div>
 							<p className='text-sm font-medium text-slate-900'>{profile?.name ?? 'Guest'}</p>
@@ -195,6 +236,7 @@ export default function ProfilePage() {
 								{ key: 'update', label: 'Update Account' },
 								{ key: 'password', label: 'Change Password' },
 								{ key: 'security', label: 'Two-Factor Authentication (2FA)' },
+								{ key: 'disable2fa', label: 'Disable 2FA' },
 							].map((item) => (
 								<li key={item.key} className='px-4'>
 									<button
@@ -338,6 +380,30 @@ export default function ProfilePage() {
 						</div>
 					</section>
 				)}
+
+        {activeTab === 'disable2fa' && (
+          <section className='rounded-xl ring-1 ring-slate-200 bg-white order-1 lg:order-none'>
+            <div className='px-4 py-4 border-b'>
+              <h2 className='text-sm md:text-base font-semibold text-slate-900'>Disable 2FA</h2>
+            </div>
+            <div className='p-4 grid grid-cols-1 gap-4'>
+              <Field label='Email'>
+                <div className='flex gap-2'>
+                  <input className={inputCls} value={profile?.email ?? ''} readOnly />
+                  <Button type='button' onClick={handleSendDisableOtp} className='shrink-0 h-9 px-3 bg-slate-900 hover:bg-slate-700 text-white'>Send OTP</Button>
+                </div>
+              </Field>
+
+              <Field label='OTP code *'>
+                <input inputMode='numeric' pattern='[0-9]*' maxLength={6} className={inputCls} placeholder='6-digit code' {...registerDisable('code')} />
+                {errorsDisable.code && <p className='text-xs text-red-600 mt-1'>{errorsDisable.code.message}</p>}
+              </Field>
+            </div>
+            <div>
+              <Button variant='outline' className='text-slate-900' onClick={handleSubmitDisable(onSubmitDisable2FA)} disabled={isSubmittingDisable}>{isSubmittingDisable ? <LoadingSpinner /> : 'Disable 2FA'}</Button>
+            </div>
+          </section>
+        )}
 			</div>
 		</div>
 	)

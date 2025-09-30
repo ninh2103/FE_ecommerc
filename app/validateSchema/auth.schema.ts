@@ -118,6 +118,6 @@ export const Enable2FAResponseSchema = z.object({
 export type Enable2FAResponseType = z.infer<typeof Enable2FAResponseSchema>
 
 export const Disable2FABodySchema = z.object({
-  totpCode: z.string().length(6),
+  code: z.string().length(6),
 })
 export type Disable2FABodyType = z.infer<typeof Disable2FABodySchema>
