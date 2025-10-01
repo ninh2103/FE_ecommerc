@@ -26,11 +26,9 @@ export default [
 			{ path: 'order', file: 'routes/manage/order/index.tsx' },
 			{ path: 'payment', file: 'routes/manage/payment/index.tsx' },
 			{ path: 'brand', file: 'routes/manage/brand/index.tsx' },
-			{ path: 'account', file: 'routes/manage/account/index.tsx' },
+			{ path: 'account', file: 'routes/manage/account/Account.tsx' },
 			{ path: 'role', file: 'routes/manage/role/index.tsx' },
 			{ path: 'permission', file: 'routes/manage/permission/index.tsx' },
-			{ path: 'setting', file: 'routes/manage/setting/setting.tsx' },
-			{ path: 'profile', file: 'routes/manage/profile/index.tsx' },
 		],
 	},
 ] satisfies RouteConfig;

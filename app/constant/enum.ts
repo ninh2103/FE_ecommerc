@@ -6,3 +6,4 @@ export const VerificationCodeType = {
 } as const
 
 export type TypeOfVerificationCodeType = (typeof VerificationCodeType)[keyof typeof VerificationCodeType]
+
