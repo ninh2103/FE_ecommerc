@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { userApi } from '~/apiRequest/user'
-import type { CreateUserBodyType, GetUserResType, UpdateUserBodyType } from '~/validateSchema/account.schema'
+import type { CreateUserBodyType, GetUserResType, UpdateUserBodyType, UserType } from '~/validateSchema/account.schema'
 
 interface UserState {
   users: GetUserResType['data']
@@ -31,14 +31,23 @@ export const createUser = createAsyncThunk<void, CreateUserBodyType>('user/creat
   await userApi.createUser(body)
 })
 
-export const updateUser = createAsyncThunk<void, UpdateUserBodyType>('user/updateUser', async (body, { dispatch }) => {
-  await userApi.updateUser(body)
-})
+export const updateUser = createAsyncThunk<void, UpdateUserBodyType & { id: number }>(
+  'user/updateUser',
+  async (body, { dispatch }) => {
+    const { id, ...updateData } = body
+
+    await userApi.updateUser(updateData, id)
+  }
+)
 
 export const deleteUser = createAsyncThunk<void, number>('user/deleteUser', async (id, { dispatch }) => {
   await userApi.deleteUser(id)
 })
 
+export const getUserById = createAsyncThunk<UserType, number>('user/getUserById', async (id, { dispatch }) => {
+  const response = await userApi.getUserById(id)
+  return response
+})
 const userSlice = createSlice({
   name: 'user',
   initialState,
@@ -109,6 +118,17 @@ const userSlice = createSlice({
       .addCase(deleteUser.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message || 'Failed to delete user'
+      })
+      .addCase(getUserById.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(getUserById.fulfilled, (state, action) => {
+        state.loading = false
+      })
+      .addCase(getUserById.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message || 'Failed to get user by id'
       })
   }
 })
