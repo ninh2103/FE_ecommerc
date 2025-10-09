@@ -13,3 +13,12 @@ export const RoleSchema = z.object({
 })
 
 export type RoleType = z.infer<typeof RoleSchema>
+
+export const GetRoleResSchema = z.object({
+  roles: z.array(RoleSchema),
+  totalItems: z.number(),
+  page: z.number(),
+  limit: z.number(),
+  totalPages: z.number(),
+})
+export type GetRoleResType = z.infer<typeof GetRoleResSchema>

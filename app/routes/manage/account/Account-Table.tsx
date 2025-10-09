@@ -1,5 +1,3 @@
-'use client'
-
 import { CaretSortIcon, DotsHorizontalIcon } from '@radix-ui/react-icons'
 import {
   type ColumnDef,
@@ -45,8 +43,9 @@ import { useSearchParams } from 'react-router'
 import AutoPagination from '~/components/auto-pagination'
 import { useDispatch, useSelector } from 'react-redux'
 import type { RootState, AppDispatch } from '~/store'
-import { getUser } from '~/features/userSlice'
-
+import { deleteUser, getUser } from '~/features/userSlice'
+import { toast } from 'sonner'
+import { getRole } from '~/features/roleSlice'
 
 type AccountItem = UserType
 
@@ -139,6 +138,21 @@ function AlertDialogDeleteAccount({
   employeeDelete: AccountItem | null
   setEmployeeDelete: (value: AccountItem | null) => void
 }) {
+  const dispatch = useDispatch<AppDispatch>()
+
+  const handleConfirmDelete = async () => {
+    if (!employeeDelete?.id) return
+    try {
+      await dispatch(deleteUser(employeeDelete.id)).unwrap()
+      toast.success('Xóa tài khoản thành công')
+      setEmployeeDelete(null)
+      // Silent refresh to avoid UI flicker
+      dispatch(getUser({ silent: true }))
+    } catch (_) {
+      toast.error('Xóa tài khoản thất bại')
+    }
+  }
+
   return (
     <AlertDialog
       open={Boolean(employeeDelete)}
@@ -158,7 +172,7 @@ function AlertDialogDeleteAccount({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction>Continue</AlertDialogAction>
+          <AlertDialogAction onClick={handleConfirmDelete}>Continue</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -169,14 +183,22 @@ const DEFAULT_PAGE_SIZE = 10
 export default function AccountTable() {
   const dispatch = useDispatch<AppDispatch>()
   const users = useSelector((s: RootState) => s.user.users)
+  const [hasInitialFetch, setHasInitialFetch] = useState(false)
+
   useEffect(() => {
-    dispatch(getUser())
-  }, [dispatch])
+    // Chỉ fetch lần đầu khi component mount
+    if (!hasInitialFetch) {
+      dispatch(getUser())
+      setHasInitialFetch(true)
+    }
+  }, [dispatch, hasInitialFetch])
+
   const [searchParams] = useSearchParams()
   const page = searchParams.get('page') ? Number(searchParams.get('page')) : 1
   const pageIndex = page - 1
   const [employeeIdEdit, setEmployeeIdEdit] = useState<number | undefined>()
   const [employeeDelete, setEmployeeDelete] = useState<AccountItem | null>(null)
+  const [openViewDialog, setOpenViewDialog] = useState(false)
   const resolvedPageSize = DEFAULT_PAGE_SIZE
   const typedData = useMemo(() => (users ?? []) as unknown as UserType[], [users])
   const [sorting, setSorting] = useState<SortingState>([])
@@ -218,7 +240,7 @@ export default function AccountTable() {
     if (pagination.pageIndex > maxPageIndex) {
       setPagination((prev) => ({ ...prev, pageIndex: maxPageIndex }))
     }
-  }, [totalPages,pagination.pageIndex])
+  }, [totalPages, pagination.pageIndex])
 
   useEffect(() => {
     table.setPagination({
@@ -279,11 +301,15 @@ export default function AccountTable() {
         </div>
         <div className='flex items-center justify-end space-x-2 py-4'>
           <div className='text-xs text-muted-foreground py-4 flex-1 '>
-            Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong> trong <strong>{typedData.length}</strong>{' '}
-            kết quả
+            Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong> trong{' '}
+            <strong>{typedData.length}</strong> kết quả
           </div>
           <div>
-            <AutoPagination page={table.getState().pagination.pageIndex + 1} pageSize={totalPages} pathname='/manage/accounts' />
+            <AutoPagination
+              page={table.getState().pagination.pageIndex + 1}
+              pageSize={totalPages}
+              pathname='/manage/accounts'
+            />
           </div>
         </div>
       </div>

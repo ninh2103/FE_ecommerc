@@ -7,3 +7,8 @@ export const VerificationCodeType = {
 
 export type TypeOfVerificationCodeType = (typeof VerificationCodeType)[keyof typeof VerificationCodeType]
 
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  BLOCKED = 'BLOCKED',
+}
