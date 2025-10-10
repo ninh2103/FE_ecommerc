@@ -26,6 +26,11 @@ export const updateRole = createAsyncThunk<RoleType, { body: UpdateRoleBodyType;
   }
 )
 
+export const deleteRole = createAsyncThunk<void, number>('role/deleteRole', async (roleId: number) => {
+  await roleApi.deleteRole(roleId)
+  return
+})
+
 const roleSlice = createSlice({
   name: 'role',
   initialState: {
@@ -96,6 +101,18 @@ const roleSlice = createSlice({
       .addCase(updateRole.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.error.message ?? 'Failed to update role'
+      })
+      .addCase(deleteRole.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(deleteRole.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.roles = state.roles.filter((role) => role.id !== action.meta.arg)
+      })
+      .addCase(deleteRole.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.error.message ?? 'Failed to delete role'
       })
   }
 })

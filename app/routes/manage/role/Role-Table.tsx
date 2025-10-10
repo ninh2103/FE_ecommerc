@@ -41,7 +41,8 @@ import AddRole from './Add-Role'
 import EditRole from './Edit-Role'
 import { useDispatch, useSelector } from 'react-redux'
 import type { RootState, AppDispatch } from '~/store'
-import { getRole } from '~/features/roleSlice'
+import { deleteRole, getRole } from '~/features/roleSlice'
+import { toast } from 'sonner'
 
 type RoleItem = RoleType
 
@@ -106,11 +107,24 @@ export const columns: ColumnDef<RoleType>[] = [
 
 function AlertDialogDeleteRole({
   roleDelete,
-  setRoleDelete
+  setRoleDelete,
+  onDeleteSuccess
 }: {
   roleDelete: RoleItem | null
   setRoleDelete: (value: RoleItem | null) => void
+  onDeleteSuccess: (roleId: number) => void
 }) {
+  const handleDelete = async () => {
+    if (!roleDelete?.id) return
+    try {
+      await onDeleteSuccess(roleDelete.id)
+      toast.success('Xóa vai trò thành công')
+    } catch (error) {
+      toast.error('Xóa vai trò thất bại')
+    }
+    setRoleDelete(null)
+  }
+
   return (
     <AlertDialog
       open={Boolean(roleDelete)}
@@ -128,7 +142,7 @@ function AlertDialogDeleteRole({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction>Continue</AlertDialogAction>
+          <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -139,6 +153,7 @@ const PAGE_SIZE = 10
 export default function RoleTable() {
   const dispatch = useDispatch<AppDispatch>()
   const { roles } = useSelector((state: RootState) => state.role)
+
   const isRoleLoading = useSelector((state: RootState) => state.role.isLoading)
   const pageIndex = 0
   const [roleIdEdit, setRoleIdEdit] = useState<number | undefined>()
@@ -180,11 +195,19 @@ export default function RoleTable() {
     table.setPagination({ pageIndex, pageSize: PAGE_SIZE })
   }, [table, pageIndex])
 
+  const handleDeleteRole = (roleId: number) => {
+    dispatch(deleteRole(roleId))
+  }
+
   return (
     <RoleTableContext.Provider value={{ roleIdEdit, setRoleIdEdit, roleDelete, setRoleDelete }}>
       <div className='w-full'>
         <EditRole id={roleIdEdit} setId={setRoleIdEdit} onSubmitSuccess={() => {}} />
-        <AlertDialogDeleteRole roleDelete={roleDelete} setRoleDelete={setRoleDelete} />
+        <AlertDialogDeleteRole
+          roleDelete={roleDelete}
+          setRoleDelete={setRoleDelete}
+          onDeleteSuccess={handleDeleteRole}
+        />
         <div className='flex items-center py-4'>
           <Input
             placeholder='Lọc theo tên vai trò...'
