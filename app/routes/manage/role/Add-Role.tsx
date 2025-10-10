@@ -17,11 +17,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Form, FormField, FormItem, FormMessage } from '~/components/ui/form'
 import { CreateRoleBodySchema, type CreateRoleBodyType } from '~/validateSchema/role.schema'
-import { roleApi } from '~/apiRequest/role'
+import { createRole } from '~/features/roleSlice'
 import { Switch } from '~/components/ui/switch'
 import { toast } from 'sonner'
+import { useDispatch } from 'react-redux'
+import type { AppDispatch } from '~/store'
 
 export default function AddRole() {
+  const dispatch = useDispatch<AppDispatch>()
   const [open, setOpen] = useState(false)
   const form = useForm<CreateRoleBodyType>({
     resolver: zodResolver(CreateRoleBodySchema),
@@ -34,7 +37,7 @@ export default function AddRole() {
 
   const onSubmit = async (values: CreateRoleBodyType) => {
     try {
-      await roleApi.createRole(values)
+      await dispatch(createRole(values))
       toast.success('Tạo vai trò thành công')
       setOpen(false)
       form.reset()
