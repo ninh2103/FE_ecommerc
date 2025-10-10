@@ -18,6 +18,9 @@ import { Switch } from '~/components/ui/switch'
 import { UpdateRoleBodySchema, type UpdateRoleBodyType } from '~/validateSchema/role.schema'
 import { roleApi } from '~/apiRequest/role'
 import { toast } from 'sonner'
+import { updateRole } from '~/features/roleSlice'
+import { useDispatch } from 'react-redux'
+import type { AppDispatch } from '~/store'
 
 export default function EditRole({
   id,
@@ -37,11 +40,14 @@ export default function EditRole({
       permissionsIds: []
     }
   })
+  const dispatch = useDispatch<AppDispatch>()
+
   const onSubmit = async (values: UpdateRoleBodyType) => {
     if (!id) return
     try {
-      await roleApi.updateRole(values, id)
+      await dispatch(updateRole({ body: values, roleId: id }))
       toast.success('Cập nhật vai trò thành công')
+      form.reset()
       onSubmitSuccess?.()
       setId(undefined)
     } catch (error) {
