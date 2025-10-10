@@ -1,9 +1,9 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
-import { roleApi } from "~/apiRequest/role"
-import type { RoleType } from "~/validateSchema/role.schema"
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { roleApi } from '~/apiRequest/role'
+import type { GetRoleResType, RoleType } from '~/validateSchema/role.schema'
 
 // Thunk gọi API
-export const getRole = createAsyncThunk('role/getRole', async () => {
+export const getRole = createAsyncThunk<GetRoleResType, void>('role/getRole', async () => {
   const response = await roleApi.getRole()
   return response
 })
