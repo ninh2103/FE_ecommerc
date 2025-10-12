@@ -43,7 +43,7 @@ export default function AddPermission() {
       toast.success('Tạo quyền thành công')
       setOpen(false)
       form.reset()
-      dispatch(getPermission()) // Refresh data
+      dispatch(getPermission({ page: 1, limit: 10 })) // Refresh data
     } catch (error) {
       toast.error('Không thể tạo quyền')
     }

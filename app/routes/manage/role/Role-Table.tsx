@@ -150,7 +150,7 @@ function AlertDialogDeleteRole({
 const PAGE_SIZE = 10
 export default function RoleTable() {
   const dispatch = useDispatch<AppDispatch>()
-  const { roles } = useSelector((state: RootState) => state.role)
+  const { roles, page, limit, totalItems, totalPages } = useSelector((state: RootState) => state.role)
 
   const isRoleLoading = useSelector((state: RootState) => state.role.isLoading)
   const pageIndex = 0
@@ -256,8 +256,10 @@ export default function RoleTable() {
           </div>
           <div>
             <AutoPagination
-              page={table.getState().pagination.pageIndex + 1}
-              pageSize={table.getPageCount()}
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              limit={limit}
               pathname='/manage/role'
             />
           </div>

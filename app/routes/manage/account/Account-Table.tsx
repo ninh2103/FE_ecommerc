@@ -181,7 +181,7 @@ function AlertDialogDeleteAccount({
 const DEFAULT_PAGE_SIZE = 10
 export default function AccountTable() {
   const dispatch = useDispatch<AppDispatch>()
-  const users = useSelector((s: RootState) => s.user.users)
+  const { users, page, limit, totalItems, totalPages } = useSelector((s: RootState) => s.user)
   const [hasInitialFetch, setHasInitialFetch] = useState(false)
 
   useEffect(() => {
@@ -192,8 +192,6 @@ export default function AccountTable() {
     }
   }, [dispatch, hasInitialFetch])
 
-  const [searchParams] = useSearchParams()
-  const page = searchParams.get('page') ? Number(searchParams.get('page')) : 1
   const pageIndex = page - 1
   const [employeeIdEdit, setEmployeeIdEdit] = useState<number | undefined>()
   const [employeeDelete, setEmployeeDelete] = useState<AccountItem | null>(null)
@@ -207,8 +205,6 @@ export default function AccountTable() {
     pageIndex,
     pageSize: resolvedPageSize
   })
-
-  const totalPages = Math.max(1, Math.ceil((typedData.length ?? 0) / resolvedPageSize))
 
   const table = useReactTable({
     data: typedData,
@@ -304,9 +300,11 @@ export default function AccountTable() {
           </div>
           <div>
             <AutoPagination
-              page={table.getState().pagination.pageIndex + 1}
-              pageSize={totalPages}
-              pathname='/manage/accounts'
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              limit={limit}
+              pathname='/manage/account'
             />
           </div>
         </div>

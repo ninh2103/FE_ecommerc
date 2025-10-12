@@ -5,7 +5,6 @@ import { useEffect, useState, createContext, useContext } from 'react'
 import {
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   flexRender,
@@ -43,6 +42,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import type { RootState, AppDispatch } from '~/store'
 import { deletePermission, getPermission } from '~/features/permissionSlice'
 import { toast } from 'sonner'
+import { useSearchParams } from 'react-router'
 
 type PermissionItem = PermissionType
 
@@ -161,13 +161,13 @@ function AlertDialogDeletePermission({
   )
 }
 
-const PAGE_SIZE = 10
 export default function PermissionTable() {
   const dispatch = useDispatch<AppDispatch>()
-  const { data } = useSelector((state: RootState) => state.permission)
+  const [searchParams] = useSearchParams()
+  const currentPage = Number(searchParams.get('page')) || 1
 
-  const isPermissionLoading = useSelector((state: RootState) => state.permission.isLoading)
-  const pageIndex = 0
+  const { data, page, limit, totalItems, totalPages } = useSelector((state: RootState) => state.permission)
+
   const [permissionIdEdit, setPermissionIdEdit] = useState<number | undefined>()
   const [permissionDelete, setPermissionDelete] = useState<PermissionItem | null>(null)
   const permission: PermissionType[] = data ?? []
@@ -175,15 +175,11 @@ export default function PermissionTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const [pagination, setPagination] = useState({
-    pageIndex,
-    pageSize: PAGE_SIZE
-  })
 
   useEffect(() => {
-    // Chỉ fetch lần đầu khi component mount
-    dispatch(getPermission())
-  }, [dispatch])
+    // Fetch data khi page thay đổi
+    dispatch(getPermission({ page: currentPage, limit: 10 }))
+  }, [dispatch, currentPage])
 
   const table = useReactTable({
     data: permission,
@@ -191,24 +187,17 @@ export default function PermissionTable() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    onPaginationChange: setPagination,
-    autoResetPageIndex: false,
-    state: { sorting, columnFilters, columnVisibility, rowSelection, pagination }
+    state: { sorting, columnFilters, columnVisibility, rowSelection }
   })
-
-  useEffect(() => {
-    table.setPagination({ pageIndex, pageSize: PAGE_SIZE })
-  }, [table, pageIndex])
 
   const handleDeletePermission = async (permissionId: number) => {
     try {
       await dispatch(deletePermission(permissionId)).unwrap()
-      dispatch(getPermission())
+      dispatch(getPermission({ page: currentPage, limit: 10 }))
     } catch (error) {
       toast.error('Xóa quyền thất bại')
     }
@@ -270,13 +259,15 @@ export default function PermissionTable() {
         </div>
         <div className='flex items-center justify-end space-x-2 py-4'>
           <div className='text-xs text-muted-foreground py-4 flex-1 '>
-            Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong> trong{' '}
-            <strong>{permission.length}</strong> kết quả
+            Hiển thị <strong>{table.getRowModel().rows.length}</strong> trong <strong>{permission.length}</strong> kết
+            quả
           </div>
           <div>
             <AutoPagination
-              page={table.getState().pagination.pageIndex + 1}
-              pageSize={table.getPageCount()}
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              limit={limit}
               pathname='/manage/permission'
             />
           </div>

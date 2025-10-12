@@ -13,7 +13,12 @@ const API_DELETE_PERMISSION_URL = '/permission'
 const API_GET_PERMISSION_BY_ID_URL = '/permission'
 
 export const permissionApi = {
-  getPermission: (): Promise<GetPermissionResType> => axiosClient.get(API_GET_PERMISSION_URL),
+  getPermission: (page?: number, limit?: number): Promise<GetPermissionResType> => {
+    const params = new URLSearchParams()
+    if (page) params.append('page', page.toString())
+    if (limit) params.append('limit', limit.toString())
+    return axiosClient.get(`${API_GET_PERMISSION_URL}?${params.toString()}`)
+  },
   createPermission: (body: CreatePermissionBodyType): Promise<PermissionType> =>
     axiosClient.post(API_CREATE_PERMISSION_URL, body),
   updatePermission: (body: UpdatePermissionBodyType, permissionId: number): Promise<PermissionType> =>

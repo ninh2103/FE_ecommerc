@@ -8,10 +8,13 @@ import type {
 } from '~/validateSchema/permission.schema'
 
 // Thunk gọi API
-export const getPermission = createAsyncThunk<GetPermissionResType, void>('permission/getPermission', async () => {
-  const response = await permissionApi.getPermission()
-  return response
-})
+export const getPermission = createAsyncThunk<GetPermissionResType, { page?: number; limit?: number }>(
+  'permission/getPermission',
+  async ({ page, limit }) => {
+    const response = await permissionApi.getPermission(page, limit)
+    return response
+  }
+)
 
 export const getPermissionById = createAsyncThunk<PermissionType, number>(
   'permission/getPermissionById',

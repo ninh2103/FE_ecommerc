@@ -8,9 +8,12 @@ import {
   PaginationPrevious
 } from '~/components/ui/pagination'
 import { cn } from '~/lib/utils'
+
 interface Props {
-  page: number
-  pageSize: number
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  limit: number
   pathname: string
 }
 
@@ -36,7 +39,7 @@ Với range = 2 áp dụng cho khoảng cách đầu, cuối và xung quanh curr
  */
 
 const RANGE = 2
-export default function AutoPagination({ page, pageSize, pathname }: Props) {
+export default function AutoPagination({ currentPage, totalPages, totalItems, limit, pathname }: Props) {
   const renderPagination = () => {
     let dotAfter = false
     let dotBefore = false
@@ -44,7 +47,7 @@ export default function AutoPagination({ page, pageSize, pathname }: Props) {
       if (!dotBefore) {
         dotBefore = true
         return (
-          <PaginationItem>
+          <PaginationItem key={`dot-before-${index}`}>
             <PaginationEllipsis />
           </PaginationItem>
         )
@@ -55,36 +58,33 @@ export default function AutoPagination({ page, pageSize, pathname }: Props) {
       if (!dotAfter) {
         dotAfter = true
         return (
-          <PaginationItem>
+          <PaginationItem key={`dot-after-${index}`}>
             <PaginationEllipsis />
           </PaginationItem>
         )
       }
       return null
     }
-    return Array(pageSize)
+    return Array(totalPages)
       .fill(0)
       .map((_, index) => {
         const pageNumber = index + 1
 
         // Điều kiện để return về ...
-        if (page <= RANGE * 2 + 1 && pageNumber > page + RANGE && pageNumber < pageSize - RANGE + 1) {
+        if (currentPage <= RANGE * 2 + 1 && pageNumber > currentPage + RANGE && pageNumber < totalPages - RANGE + 1) {
           return renderDotAfter(index)
-        } else if (page > RANGE * 2 + 1 && page < pageSize - RANGE * 2) {
-          if (pageNumber < page - RANGE && pageNumber > RANGE) {
+        } else if (currentPage > RANGE * 2 + 1 && currentPage < totalPages - RANGE * 2) {
+          if (pageNumber < currentPage - RANGE && pageNumber > RANGE) {
             return renderDotBefore(index)
-          } else if (pageNumber > page + RANGE && pageNumber < pageSize - RANGE + 1) {
+          } else if (pageNumber > currentPage + RANGE && pageNumber < totalPages - RANGE + 1) {
             return renderDotAfter(index)
           }
-        } else if (page >= pageSize - RANGE * 2 && pageNumber > RANGE && pageNumber < page - RANGE) {
+        } else if (currentPage >= totalPages - RANGE * 2 && pageNumber > RANGE && pageNumber < currentPage - RANGE) {
           return renderDotBefore(index)
         }
         return (
-          <PaginationItem key={index}>
-            <PaginationLink
-              href={`${pathname}?page=${pageNumber}`}
-              isActive={pageNumber === page}
-            >
+          <PaginationItem key={pageNumber}>
+            <PaginationLink href={`${pathname}?page=${pageNumber}`} isActive={pageNumber === currentPage}>
               {pageNumber}
             </PaginationLink>
           </PaginationItem>
@@ -96,12 +96,12 @@ export default function AutoPagination({ page, pageSize, pathname }: Props) {
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious
-            href={`${pathname}?page=${page - 1}`}
+            href={`${pathname}?page=${currentPage - 1}`}
             className={cn({
-              'cursor-not-allowed': page === 1
+              'cursor-not-allowed': currentPage === 1
             })}
             onClick={(e) => {
-              if (page === 1) {
+              if (currentPage === 1) {
                 e.preventDefault()
               }
             }}
@@ -111,12 +111,12 @@ export default function AutoPagination({ page, pageSize, pathname }: Props) {
 
         <PaginationItem>
           <PaginationNext
-            href={`${pathname}?page=${page + 1}`}
+            href={`${pathname}?page=${currentPage + 1}`}
             className={cn({
-              'cursor-not-allowed': page === pageSize
+              'cursor-not-allowed': currentPage === totalPages
             })}
             onClick={(e) => {
-              if (page === pageSize) {
+              if (currentPage === totalPages) {
                 e.preventDefault()
               }
             }}

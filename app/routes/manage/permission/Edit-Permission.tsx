@@ -48,7 +48,7 @@ export default function EditPermission({
       toast.success('Cập nhật quyền thành công')
       onSubmitSuccess?.()
       setId(undefined)
-      dispatch(getPermission()) // Refresh data
+      dispatch(getPermission({ page: 1, limit: 10 })) // Refresh data
     } catch (error) {
       toast.error('Không thể cập nhật quyền')
     }
