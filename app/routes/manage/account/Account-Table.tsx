@@ -45,7 +45,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import type { RootState, AppDispatch } from '~/store'
 import { deleteUser, getUser } from '~/features/userSlice'
 import { toast } from 'sonner'
-import { getRole } from '~/features/roleSlice'
 
 type AccountItem = UserType
 
@@ -198,7 +197,6 @@ export default function AccountTable() {
   const pageIndex = page - 1
   const [employeeIdEdit, setEmployeeIdEdit] = useState<number | undefined>()
   const [employeeDelete, setEmployeeDelete] = useState<AccountItem | null>(null)
-  const [openViewDialog, setOpenViewDialog] = useState(false)
   const resolvedPageSize = DEFAULT_PAGE_SIZE
   const typedData = useMemo(() => (users ?? []) as unknown as UserType[], [users])
   const [sorting, setSorting] = useState<SortingState>([])

@@ -28,7 +28,7 @@ export default [
       { path: 'brand', file: 'routes/manage/brand/index.tsx' },
       { path: 'account', file: 'routes/manage/account/Account.tsx' },
       { path: 'role', file: 'routes/manage/role/Role.tsx' },
-      { path: 'permission', file: 'routes/manage/permission/index.tsx' }
+      { path: 'permission', file: 'routes/manage/permission/Permission.tsx' }
     ]
   }
 ] satisfies RouteConfig

@@ -4,10 +4,17 @@ import { profileSlice } from './features/profileSlice'
 import { mediaSlice } from './features/mediaSlice'
 import userSlice from './features/userSlice'
 import roleSlice from './features/roleSlice'
+import permissionSlice from './features/permissionSlice'
 
 export const store = configureStore({
-  reducer: { auth: authSlice.reducer, profile: profileSlice.reducer, media: mediaSlice.reducer, user: userSlice, role: roleSlice },
-  
+  reducer: {
+    auth: authSlice.reducer,
+    profile: profileSlice.reducer,
+    media: mediaSlice.reducer,
+    user: userSlice,
+    role: roleSlice,
+    permission: permissionSlice
+  }
 })
 
 // Lấy RootState và AppDispatch từ store của chúng ta

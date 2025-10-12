@@ -1,3 +1,5 @@
+'use client'
+
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 import { useEffect, useState, createContext, useContext } from 'react'
 import {
@@ -34,29 +36,29 @@ import {
   AlertDialogTitle
 } from '~/components/ui/alert-dialog'
 import AutoPagination from '~/components/auto-pagination'
-import type { RoleType } from '~/validateSchema/role.schema'
-import AddRole from './Add-Role'
-import EditRole from './Edit-Role'
+import type { PermissionType } from '~/validateSchema/permission.schema'
+import AddPermission from './Add-Permission'
+import EditPermission from './Edit-Permission'
 import { useDispatch, useSelector } from 'react-redux'
 import type { RootState, AppDispatch } from '~/store'
-import { deleteRole, getRole } from '~/features/roleSlice'
+import { deletePermission, getPermission } from '~/features/permissionSlice'
 import { toast } from 'sonner'
 
-type RoleItem = RoleType
+type PermissionItem = PermissionType
 
-const RoleTableContext = createContext<{
-  setRoleIdEdit: (value: number | undefined) => void
-  roleIdEdit: number | undefined
-  roleDelete: RoleItem | null
-  setRoleDelete: (value: RoleItem | null) => void
+const PermissionTableContext = createContext<{
+  setPermissionIdEdit: (value: number | undefined) => void
+  permissionIdEdit: number | undefined
+  permissionDelete: PermissionItem | null
+  setPermissionDelete: (value: PermissionItem | null) => void
 }>({
-  setRoleIdEdit: () => {},
-  roleIdEdit: undefined,
-  roleDelete: null,
-  setRoleDelete: () => {}
+  setPermissionIdEdit: () => {},
+  permissionIdEdit: undefined,
+  permissionDelete: null,
+  setPermissionDelete: () => {}
 })
 
-export const columns: ColumnDef<RoleType>[] = [
+export const columns: ColumnDef<PermissionType>[] = [
   {
     accessorKey: 'id',
     header: 'ID'
@@ -72,17 +74,29 @@ export const columns: ColumnDef<RoleType>[] = [
     cell: ({ row }) => <div className='capitalize'>{row.getValue('description')}</div>
   },
   {
-    accessorKey: 'isActive',
-    header: 'Kích hoạt',
-    cell: ({ row }) => <div>{row.getValue<boolean>('isActive') ? 'Đang bật' : 'Đang tắt'}</div>
+    accessorKey: 'path',
+    header: 'Đường dẫn',
+    cell: ({ row }) => <div className='font-mono text-sm'>{row.getValue('path')}</div>
+  },
+  {
+    accessorKey: 'method',
+    header: 'Phương thức',
+    cell: ({ row }) => (
+      <div className='rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800'>{row.getValue('method')}</div>
+    )
+  },
+  {
+    accessorKey: 'module',
+    header: 'Module',
+    cell: ({ row }) => <div className='capitalize'>{row.getValue('module') || 'N/A'}</div>
   },
   {
     id: 'actions',
     enableHiding: false,
     cell: function Actions({ row }) {
-      const { setRoleIdEdit, setRoleDelete } = useContext(RoleTableContext)
-      const openEdit = () => setRoleIdEdit(row.original.id)
-      const openDelete = () => setRoleDelete(row.original)
+      const { setPermissionIdEdit, setPermissionDelete } = useContext(PermissionTableContext)
+      const openEdit = () => setPermissionIdEdit(row.original.id)
+      const openDelete = () => setPermissionDelete(row.original)
       return (
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
@@ -103,39 +117,39 @@ export const columns: ColumnDef<RoleType>[] = [
   }
 ]
 
-function AlertDialogDeleteRole({
-  roleDelete,
-  setRoleDelete,
+function AlertDialogDeletePermission({
+  permissionDelete,
+  setPermissionDelete,
   onDeleteSuccess
 }: {
-  roleDelete: RoleItem | null
-  setRoleDelete: (value: RoleItem | null) => void
-  onDeleteSuccess: (roleId: number) => void
+  permissionDelete: PermissionItem | null
+  setPermissionDelete: (value: PermissionItem | null) => void
+  onDeleteSuccess: (permissionId: number) => void
 }) {
   const handleDelete = async () => {
-    if (!roleDelete?.id) return
+    if (!permissionDelete?.id) return
     try {
-      await onDeleteSuccess(roleDelete.id)
-      toast.success('Xóa vai trò thành công')
+      await onDeleteSuccess(permissionDelete.id)
+      toast.success('Xóa quyền thành công')
     } catch (error) {
-      toast.error('Xóa vai trò thất bại')
+      toast.error('Xóa quyền thất bại')
     }
-    setRoleDelete(null)
+    setPermissionDelete(null)
   }
 
   return (
     <AlertDialog
-      open={Boolean(roleDelete)}
+      open={Boolean(permissionDelete)}
       onOpenChange={(value) => {
-        if (!value) setRoleDelete(null)
+        if (!value) setPermissionDelete(null)
       }}
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Xóa vai trò?</AlertDialogTitle>
+          <AlertDialogTitle>Xóa quyền?</AlertDialogTitle>
           <AlertDialogDescription>
-            Vai trò <span className='bg-foreground text-primary-foreground rounded px-1'>{roleDelete?.name}</span> sẽ bị
-            xóa vĩnh viễn
+            Quyền <span className='bg-foreground text-primary-foreground rounded px-1'>{permissionDelete?.name}</span>{' '}
+            sẽ bị xóa vĩnh viễn
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -148,15 +162,15 @@ function AlertDialogDeleteRole({
 }
 
 const PAGE_SIZE = 10
-export default function RoleTable() {
+export default function PermissionTable() {
   const dispatch = useDispatch<AppDispatch>()
-  const { roles } = useSelector((state: RootState) => state.role)
+  const { data } = useSelector((state: RootState) => state.permission)
 
-  const isRoleLoading = useSelector((state: RootState) => state.role.isLoading)
+  const isPermissionLoading = useSelector((state: RootState) => state.permission.isLoading)
   const pageIndex = 0
-  const [roleIdEdit, setRoleIdEdit] = useState<number | undefined>()
-  const [roleDelete, setRoleDelete] = useState<RoleItem | null>(null)
-  const data: RoleType[] = roles ?? []
+  const [permissionIdEdit, setPermissionIdEdit] = useState<number | undefined>()
+  const [permissionDelete, setPermissionDelete] = useState<PermissionItem | null>(null)
+  const permission: PermissionType[] = data ?? []
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -168,13 +182,11 @@ export default function RoleTable() {
 
   useEffect(() => {
     // Chỉ fetch lần đầu khi component mount
-    if (!isRoleLoading && (!roles || roles.length === 0)) {
-      dispatch(getRole())
-    }
-  }, [dispatch, isRoleLoading, roles])
+    dispatch(getPermission())
+  }, [dispatch])
 
   const table = useReactTable({
-    data,
+    data: permission,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -193,28 +205,35 @@ export default function RoleTable() {
     table.setPagination({ pageIndex, pageSize: PAGE_SIZE })
   }, [table, pageIndex])
 
-  const handleDeleteRole = (roleId: number) => {
-    dispatch(deleteRole(roleId))
+  const handleDeletePermission = async (permissionId: number) => {
+    try {
+      await dispatch(deletePermission(permissionId)).unwrap()
+      dispatch(getPermission())
+    } catch (error) {
+      toast.error('Xóa quyền thất bại')
+    }
   }
 
   return (
-    <RoleTableContext.Provider value={{ roleIdEdit, setRoleIdEdit, roleDelete, setRoleDelete }}>
+    <PermissionTableContext.Provider
+      value={{ permissionIdEdit, setPermissionIdEdit, permissionDelete, setPermissionDelete }}
+    >
       <div className='w-full'>
-        <EditRole id={roleIdEdit} setId={setRoleIdEdit} onSubmitSuccess={() => {}} />
-        <AlertDialogDeleteRole
-          roleDelete={roleDelete}
-          setRoleDelete={setRoleDelete}
-          onDeleteSuccess={handleDeleteRole}
+        <EditPermission id={permissionIdEdit} setId={setPermissionIdEdit} onSubmitSuccess={() => {}} />
+        <AlertDialogDeletePermission
+          permissionDelete={permissionDelete}
+          setPermissionDelete={setPermissionDelete}
+          onDeleteSuccess={handleDeletePermission}
         />
         <div className='flex items-center py-4'>
           <Input
-            placeholder='Lọc theo tên vai trò...'
+            placeholder='Lọc theo tên quyền...'
             value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
             onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
             className='max-w-sm'
           />
           <div className='ml-auto flex items-center gap-2'>
-            <AddRole />
+            <AddPermission />
           </div>
         </div>
         <div className='rounded-md border'>
@@ -251,18 +270,18 @@ export default function RoleTable() {
         </div>
         <div className='flex items-center justify-end space-x-2 py-4'>
           <div className='text-xs text-muted-foreground py-4 flex-1 '>
-            Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong> trong <strong>{data.length}</strong>{' '}
-            kết quả
+            Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong> trong{' '}
+            <strong>{permission.length}</strong> kết quả
           </div>
           <div>
             <AutoPagination
               page={table.getState().pagination.pageIndex + 1}
               pageSize={table.getPageCount()}
-              pathname='/manage/role'
+              pathname='/manage/permission'
             />
           </div>
         </div>
       </div>
-    </RoleTableContext.Provider>
+    </PermissionTableContext.Provider>
   )
 }

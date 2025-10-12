@@ -30,18 +30,19 @@ export const deleteRole = createAsyncThunk<void, number>('role/deleteRole', asyn
   await roleApi.deleteRole(roleId)
   return
 })
+const initialState = {
+  roles: [] as RoleType[],
+  page: 1,
+  limit: 10,
+  totalItems: 0,
+  totalPages: 0,
+  isLoading: false,
+  error: null as string | null
+}
 
 const roleSlice = createSlice({
   name: 'role',
-  initialState: {
-    roles: [] as RoleType[],
-    page: 1,
-    limit: 10,
-    totalItems: 0,
-    totalPages: 0,
-    isLoading: false,
-    error: null as string | null
-  },
+  initialState: initialState,
   reducers: {
     setRoles: (state, action) => {
       state.roles = action.payload
