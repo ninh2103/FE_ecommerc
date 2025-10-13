@@ -25,7 +25,7 @@ export default [
       { path: 'category', file: 'routes/manage/category/Category.tsx' },
       { path: 'order', file: 'routes/manage/order/index.tsx' },
       { path: 'payment', file: 'routes/manage/payment/index.tsx' },
-      { path: 'brand', file: 'routes/manage/brand/index.tsx' },
+      { path: 'brand', file: 'routes/manage/brand/Brand.tsx' },
       { path: 'account', file: 'routes/manage/account/Account.tsx' },
       { path: 'role', file: 'routes/manage/role/Role.tsx' },
       { path: 'permission', file: 'routes/manage/permission/Permission.tsx' }
