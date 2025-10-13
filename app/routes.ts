@@ -22,7 +22,7 @@ export default [
     children: [
       { path: 'dashboard', file: 'routes/manage/dashboard/dashboard.tsx' },
       { path: 'product', file: 'routes/manage/product/index.tsx' },
-      { path: 'category', file: 'routes/manage/category/index.tsx' },
+      { path: 'category', file: 'routes/manage/category/Category.tsx' },
       { path: 'order', file: 'routes/manage/order/index.tsx' },
       { path: 'payment', file: 'routes/manage/payment/index.tsx' },
       { path: 'brand', file: 'routes/manage/brand/index.tsx' },

@@ -5,6 +5,7 @@ import { mediaSlice } from './features/mediaSlice'
 import userSlice from './features/userSlice'
 import roleSlice from './features/roleSlice'
 import permissionSlice from './features/permissionSlice'
+import { categorySlice } from '~/features/categorySlice'
 
 export const store = configureStore({
   reducer: {
@@ -13,7 +14,8 @@ export const store = configureStore({
     media: mediaSlice.reducer,
     user: userSlice,
     role: roleSlice,
-    permission: permissionSlice
+    permission: permissionSlice,
+    category: categorySlice.reducer
   }
 })
 
