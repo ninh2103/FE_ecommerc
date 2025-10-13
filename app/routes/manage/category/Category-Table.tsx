@@ -41,6 +41,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import type { RootState, AppDispatch } from '~/store'
 import { deleteCategory, getCategory } from '~/features/categorySlice'
 import { toast } from 'sonner'
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 
 type CategoryItem = CategoryIncludeTranslationType
 
@@ -58,8 +59,23 @@ const CategoryTableContext = createContext<{
 
 export const columns: ColumnDef<CategoryIncludeTranslationType>[] = [
   { accessorKey: 'id', header: 'ID' },
+  {
+    accessorKey: 'logo',
+    header: 'Logo',
+    cell: ({ row }) => {
+      const logoUrl = row.original.logo
+      const safeSrc = logoUrl && (logoUrl.startsWith('http') || logoUrl.startsWith('/')) ? logoUrl : undefined
+      return (
+        <div>
+          <Avatar className='aspect-square w-[100px] h-[100px] rounded-md object-cover'>
+            <AvatarImage src={safeSrc ?? undefined} />
+            <AvatarFallback className='rounded-none'>{logoUrl ? 'Logo' : 'No logo'}</AvatarFallback>
+          </Avatar>
+        </div>
+      )
+    }
+  },
   { accessorKey: 'name', header: 'Tên', cell: ({ row }) => <div className='capitalize'>{row.getValue('name')}</div> },
-  { accessorKey: 'logo', header: 'Logo' },
   { accessorKey: 'parentCategoryId', header: 'Danh mục cha' },
   {
     id: 'actions',
@@ -141,7 +157,7 @@ export default function CategoryTable() {
   const pageIndex = 0
   const [categoryIdEdit, setCategoryIdEdit] = useState<number | undefined>()
   const [categoryDelete, setCategoryDelete] = useState<CategoryItem | null>(null)
-  const rows: CategoryIncludeTranslationType[] = data ?? []
+  const categories: CategoryIncludeTranslationType[] = data
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -152,13 +168,13 @@ export default function CategoryTable() {
   })
 
   useEffect(() => {
-    if (!isLoading && (!rows || rows.length === 0)) {
+    if (!isLoading && (!categories || categories.length === 0)) {
       dispatch(getCategory())
     }
-  }, [dispatch, isLoading, rows])
+  }, [dispatch, isLoading, categories])
 
   const table = useReactTable({
-    data: rows,
+    data: categories,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -235,8 +251,8 @@ export default function CategoryTable() {
         </div>
         <div className='flex items-center justify-end space-x-2 py-4'>
           <div className='text-xs text-muted-foreground py-4 flex-1 '>
-            Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong> trong <strong>{rows.length}</strong>{' '}
-            kết quả
+            Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong> trong{' '}
+            <strong>{categories.length}</strong> kết quả
           </div>
           <div>
             <AutoPagination
