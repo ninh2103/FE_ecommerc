@@ -25,3 +25,34 @@ export const HTTP_METHOD = {
   OPTIONS: 'OPTIONS',
   HEAD: 'HEAD'
 } as const
+
+export const ALL_LANGUAGE = 'all'
+
+export const ProductOrderBy = {
+  ASC: 'asc',
+  DESC: 'desc'
+} as const
+
+export type ProductOrderByType = (typeof ProductOrderBy)[keyof typeof ProductOrderBy]
+
+export const ProductSortBy = {
+  PRICE: 'price',
+  CREATED_AT: 'createdAt',
+  SALE: 'sale'
+} as const
+
+export type ProductSortByType = (typeof ProductSortBy)[keyof typeof ProductSortBy]
+
+export const PAYMENT_PREFIX = 'DH'
+
+export type Variant = {
+  value: string
+  options: string[]
+}
+
+export type SKU = {
+  value: string
+  price: number
+  stock: number
+  image: string
+}
