@@ -20,7 +20,7 @@ export const productApi = {
   getManagementProducts: (): Promise<GetProductsResType> => axiosClient.get(API_GET_MANAGEMENT_PRODUCTS_URL),
   createProduct: (body: CreateProductBodyType): Promise<ProductType> => axiosClient.post(API_CREATE_PRODUCT_URL, body),
   updateProduct: (body: UpdateProductBodyType, productId: number): Promise<ProductType> =>
-    axiosClient.put(API_UPDATE_PRODUCT_URL, body),
+    axiosClient.put(`${API_UPDATE_PRODUCT_URL}/${productId}`, body),
   deleteProduct: (productId: number): Promise<void> => axiosClient.delete(`${API_DELETE_PRODUCT_URL}/${productId}`),
   getManagementProductById: (productId: number): Promise<GetProductDetailResType> =>
     axiosClient.get(`${API_GET_MANAGEMENT_PRODUCT_BY_ID_URL}/${productId}`),

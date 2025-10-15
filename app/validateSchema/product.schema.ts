@@ -5,7 +5,7 @@ import { CategoryIncludeTranslationSchema } from '~/validateSchema/category.sche
 import { ProductTranslationSchema } from '~/validateSchema/product-translation'
 import { SKUSchema, UpsertSKUSchema } from '~/validateSchema/sku.schema'
 
-function generateSKUs(variants: Variant[]): SKU[] {
+export function generateSKUs(variants: Variant[]): SKU[] {
   // Đệ quy sinh các tổ hợp
   const combine = (index: number, current: string[]): string[][] => {
     if (index === variants.length) return [current]
