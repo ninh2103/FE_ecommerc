@@ -5,6 +5,7 @@ import type { AppDispatch, RootState } from '~/store'
 import { getProducts } from '~/features/productSlice'
 import { useEffect } from 'react'
 import type { ProductType } from '~/validateSchema/product.schema'
+import { Link } from 'react-router'
 
 export default function ProductSection() {
   const dispatch = useDispatch<AppDispatch>()
@@ -69,10 +70,12 @@ function ProductCard({ product }: { product: ProductType }) {
         </div>
 
         {/* Add to cart button */}
-        <Button className='w-full gap-2 bg-slate-900 hover:bg-slate-800 text-white'>
-          <ShoppingCart className='h-4 w-4' />
-          <span>Add to Cart</span>
-        </Button>
+        <Link to={`/product/${product.id}`}>
+          <Button className='w-full gap-2 bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-pointer'>
+            <ShoppingCart className='h-4 w-4' />
+            <span>Add to Cart</span>
+          </Button>
+        </Link>
       </div>
     </div>
   )
