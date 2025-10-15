@@ -7,7 +7,7 @@ import type {
 } from '~/validateSchema/cart.schema'
 
 const API_CART_URL = '/cart'
-const API_ADD_TO_CART_URL = '/cart/add'
+const API_ADD_TO_CART_URL = '/cart'
 const API_UPDATE_CART_URL = '/cart/update'
 const API_DELETE_FROM_CART_URL = '/cart/delete'
 

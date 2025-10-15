@@ -8,6 +8,7 @@ import permissionSlice from './features/permissionSlice'
 import { categorySlice } from '~/features/categorySlice'
 import { brandSlice } from '~/features/brandSlice'
 import { productSlice } from '~/features/productSlice'
+import { cartSlice } from '~/features/cartSlice'
 
 export const store = configureStore({
   reducer: {
@@ -19,7 +20,8 @@ export const store = configureStore({
     permission: permissionSlice,
     category: categorySlice.reducer,
     brand: brandSlice.reducer,
-    product: productSlice.reducer
+    product: productSlice.reducer,
+    cart: cartSlice.reducer
   }
 })
 

@@ -6,6 +6,13 @@ import type { AppDispatch, RootState } from '~/store'
 import { getProductById, getProducts } from '~/features/productSlice'
 import { useEffect, useMemo, useState } from 'react'
 import type { ProductType } from '~/validateSchema/product.schema'
+import { AddToCartBodySchema, type AddToCartBodyType } from '~/validateSchema/cart.schema'
+import { useForm, type UseFormReturn } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { addToCart } from '~/features/cartSlice'
+import { cn, handleErrorApi } from '~/lib/utils'
+import { Link } from 'react-router'
+import { toast } from 'sonner'
 
 export default function ProductDetailPage() {
   const { id } = useParams()
@@ -22,9 +29,49 @@ export default function ProductDetailPage() {
   }, [dispatch, isProductLoading, products])
   const product = products.find((p: ProductType) => p.id === Number(id))
   const [qty, setQty] = useState(1)
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({})
+  const [selectedSkuId, setSelectedSkuId] = useState<number | null>(null)
   const priceFmt = useMemo(() => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }), [])
   const mainImage = (product?.images && product.images[0]) || 'https://placehold.co/800x800?text=No+Image'
   const thumbnails = product?.images?.slice(0, 4) || []
+
+  const form = useForm<AddToCartBodyType>({
+    resolver: zodResolver(AddToCartBodySchema),
+    defaultValues: {
+      skuId: 0,
+      quantity: 1
+    }
+  })
+
+  const handleAddToCart = async (body: AddToCartBodyType) => {
+    try {
+      await dispatch(addToCart(body)).unwrap()
+      toast.success('Thêm vào giỏ hàng thành công')
+    } catch (error) {
+      handleErrorApi<any>({ error: error as any, setError: form.setError })
+      toast.error('Thêm vào giỏ hàng thất bại')
+    }
+  }
+
+  // Initialize default selections from first option of each variant
+  useEffect(() => {
+    if (product?.variants && product.variants.length > 0) {
+      const initial: Record<string, string> = {}
+      product.variants.forEach((v) => {
+        initial[v.value] = v.options[0]
+      })
+      setSelectedOptions(initial)
+    }
+  }, [product?.variants])
+
+  // Compute selectedSkuId whenever selection changes
+  useEffect(() => {
+    const skus = (product as any)?.skus as { id: number; value: string }[] | undefined
+    if (!product || !skus || !product.variants) return
+    const selectedValue = product.variants.map((v) => selectedOptions[v.value]).join('-')
+    const matched = skus.find((s) => s.value === selectedValue)
+    setSelectedSkuId(matched ? matched.id : null)
+  }, [product, selectedOptions])
   return (
     <div className='container mx-auto px-4 py-6 md:py-8'>
       {/* Breadcrumbs */}
@@ -91,16 +138,35 @@ export default function ProductDetailPage() {
                 <div key={v.value} className='flex items-center gap-2'>
                   <span className='text-xs text-slate-500 w-14'>{v.value}:</span>
                   <div className='flex flex-wrap gap-2'>
-                    {v.options.map((o) => (
-                      <span key={o} className='text-[10px] px-2 py-1 rounded border text-slate-700'>
-                        {o}
-                      </span>
-                    ))}
+                    {v.options.map((o) => {
+                      const selected = selectedOptions[v.value] === o
+                      return (
+                        <button
+                          key={o}
+                          type='button'
+                          className={cn(
+                            'text-[10px] px-2 py-1 rounded border',
+                            selected ? 'bg-slate-900 text-white border-slate-900' : 'text-slate-700 hover:bg-slate-50'
+                          )}
+                          onClick={() => setSelectedOptions((prev) => ({ ...prev, [v.value]: o }))}
+                        >
+                          {o}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               ))}
+              {/* Current combination preview */}
+              {(product as any)?.skus && (
+                <div className='text-xs text-slate-600'>
+                  Chọn: {product.variants.map((v) => selectedOptions[v.value]).join('-') || '—'}
+                </div>
+              )}
             </div>
           )}
+
+          {/* Removed SKU selector; using first available SKU automatically */}
 
           {/* Quantity + actions */}
           <div className='mt-4 flex items-center gap-3'>
@@ -123,10 +189,16 @@ export default function ProductDetailPage() {
                 <Plus className='h-4 w-4' />
               </button>
             </div>
-            <Button className='gap-2 bg-slate-900 hover:bg-slate-800 text-white'>
-              <ShoppingCart className='h-4 w-4' />
-              Add to cart
-            </Button>
+            <Link to='/cart'>
+              <Button
+                className='gap-2 bg-slate-900 hover:bg-slate-800 text-white'
+                disabled={!selectedSkuId}
+                onClick={() => selectedSkuId && handleAddToCart({ skuId: selectedSkuId, quantity: qty })}
+              >
+                <ShoppingCart className='h-4 w-4' />
+                Add to cart
+              </Button>
+            </Link>
             <Button variant='outline' className='text-slate-900'>
               Buy Now
             </Button>
@@ -204,10 +276,12 @@ function RelatedCard({ p }: { p: ProductType }) {
             <span className='text-[14px] font-semibold text-slate-900'>${p.basePrice}</span>
             <span className='text-[11px] text-slate-400 line-through'>${p.virtualPrice}</span>
           </div>
-          <Button className='h-8 px-3 gap-1 bg-slate-900 hover:bg-slate-800 text-white'>
-            <ShoppingCart className='h-4 w-4' />
-            <span className='text-[11px]'>Add</span>
-          </Button>
+          <Link to={`/product/${p.id}`}>
+            <Button className='h-8 px-3 gap-1 bg-slate-900 hover:bg-slate-800 text-white'>
+              <ShoppingCart className='h-4 w-4' />
+              <span className='text-[11px]'>View</span>
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

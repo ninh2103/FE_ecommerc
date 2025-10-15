@@ -5,25 +5,6 @@ import { useEffect } from 'react'
 import { getBrand } from '~/features/brandSlice'
 import type { BrandIncludeTranslationType } from '~/validateSchema/brand.schema'
 
-// const brands: { name: string; logo: string }[] = [
-// 	{ name: 'Nestlé', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Nestle_textlogo_blue.svg/512px-Nestle_textlogo_blue.svg.png' },
-// 	{ name: 'Coca-Cola', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Coca-Cola_logo.svg/512px-Coca-Cola_logo.svg.png' },
-// 	{ name: 'Pepsi', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Pepsi_logo_2014.svg/512px-Pepsi_logo_2014.svg.png' },
-// 	{ name: 'Oreo', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Oreo_logo_2019.svg/512px-Oreo_logo_2019.svg.png' },
-// 	{ name: 'Heinz', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Kraft_Heinz_Logo_2015.svg/512px-Kraft_Heinz_Logo_2015.svg.png' },
-// 	{ name: 'Nescafé', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Nescafe_logo_2014.svg/512px-Nescafe_logo_2014.svg.png' },
-// 	{ name: 'Kellogg\'s', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Kellogg%27s_2012.svg/512px-Kellogg%27s_2012.svg.png' },
-// 	{ name: 'Lay\'s', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Lays_logo_2019.svg/512px-Lays_logo_2019.svg.png' },
-// 	{ name: 'Starbucks', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Starbucks_Corporation_Logo_2011.svg/512px-Starbucks_Corporation_Logo_2011.svg.png' },
-// 	{ name: 'Ariel', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Ariel_logo.svg/512px-Ariel_logo.svg.png' },
-// 	{ name: 'LG', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/LG_logo_%282014%29.svg/512px-LG_logo_%282014%29.svg.png' },
-// 	{ name: 'Samsung', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Samsung_Logo.svg/512px-Samsung_Logo.svg.png' },
-//   { name: 'Starbucks', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Starbucks_Corporation_Logo_2011.svg/512px-Starbucks_Corporation_Logo_2011.svg.png' },
-// 	{ name: 'Ariel', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Ariel_logo.svg/512px-Ariel_logo.svg.png' },
-// 	{ name: 'LG', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/LG_logo_%282014%29.svg/512px-LG_logo_%282014%29.svg.png' },
-// 	{ name: 'Samsung', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Samsung_Logo.svg/512px-Samsung_Logo.svg.png' },
-// ]
-
 export default function BrandSection() {
   const dispatch = useDispatch<AppDispatch>()
   const brands = useSelector((s: RootState) => s.brand.data)
