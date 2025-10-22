@@ -1,6 +1,6 @@
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { Button } from '../../../components/ui/button'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '~/store'
@@ -15,12 +15,14 @@ type UIItem = {
   price: number
   quantity: number
   image: string
+  shopId: number
 }
 
 export default function CartPage() {
   const dispatch = useDispatch<AppDispatch>()
   const cart = useSelector((state: RootState) => state.cart.cart)
   const isCartLoading = useSelector((s: RootState) => s.cart.isLoading)
+  const navigate = useNavigate()
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   useEffect(() => {
     if (!isCartLoading && (!cart || cart.length === 0)) {
@@ -37,7 +39,8 @@ export default function CartPage() {
         title: ci.sku.product.translations?.[0]?.name || ci.sku.product.name,
         price: ci.sku.price ?? ci.sku.product.basePrice,
         quantity: ci.quantity,
-        image: ci.sku.image || ci.sku.product.images?.[0] || 'https://placehold.co/128x128?text=No+Image'
+        image: ci.sku.image || ci.sku.product.images?.[0] || 'https://placehold.co/128x128?text=No+Image',
+        shopId: group.shop.id
       }))
     )
   }, [cart])
@@ -48,6 +51,13 @@ export default function CartPage() {
   )
   const shipping = selectedIds.length ? 30000 : 0
   const total = subTotal + shipping
+
+  // Infer shopId from selected items (assumes same shop per checkout)
+  const selectedShopId = useMemo(() => {
+    const firstId = selectedIds[0]
+    const item = items.find((it) => it.id === firstId)
+    return item?.shopId
+  }, [selectedIds, items])
 
   function updateQty(item: UIItem, delta: number) {
     const nextQty = item.quantity + delta
@@ -166,7 +176,21 @@ export default function CartPage() {
                 <span className='text-slate-900 font-semibold'>Total</span>
                 <span className='text-lg font-bold text-slate-900'>{formatVND(total)}</span>
               </div>
-              <Button className='w-full bg-slate-900 hover:bg-slate-800 text-white'>Proceed to Checkout</Button>
+              <Button
+                className='w-full bg-slate-900 hover:bg-slate-800 text-white'
+                disabled={selectedIds.length === 0}
+                onClick={() => {
+                  if (!selectedIds.length || !selectedShopId) return
+                  navigate('/checkout', {
+                    state: {
+                      shopId: selectedShopId,
+                      cartItemIds: selectedIds
+                    }
+                  })
+                }}
+              >
+                Proceed to Checkout
+              </Button>
             </div>
           </aside>
         </div>
