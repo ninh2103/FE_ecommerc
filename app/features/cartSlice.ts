@@ -37,10 +37,13 @@ export const addToCart = createAsyncThunk<GetCartResType, AddToCartBodyType>('ca
   return response
 })
 
-export const updateCart = createAsyncThunk<GetCartResType, UpdateCartItemBodyType>('cart/updateCart', async (body) => {
-  const response = await cartApi.updateCart(body)
-  return response
-})
+export const updateCart = createAsyncThunk<GetCartResType, { body: UpdateCartItemBodyType; cartItemId: number }>(
+  'cart/updateCart',
+  async ({ body, cartItemId }) => {
+    const response = await cartApi.updateCart(body, cartItemId)
+    return response
+  }
+)
 
 export const deleteFromCart = createAsyncThunk<GetCartResType, DeleteCartBodyType>(
   'cart/deleteFromCart',

@@ -1,11 +1,12 @@
 import { Minus, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { Button } from '../../../components/ui/button'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '~/store'
 import { deleteFromCart, getCart, updateCart } from '~/features/cartSlice'
 import { formatVND } from '~/lib/utils'
+import { Checkbox } from '~/components/ui/checkbox'
 
 type UIItem = {
   id: number
@@ -20,6 +21,7 @@ export default function CartPage() {
   const dispatch = useDispatch<AppDispatch>()
   const cart = useSelector((state: RootState) => state.cart.cart)
   const isCartLoading = useSelector((s: RootState) => s.cart.isLoading)
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
   useEffect(() => {
     if (!isCartLoading && (!cart || cart.length === 0)) {
       dispatch(getCart()).catch(() => {})
@@ -40,16 +42,31 @@ export default function CartPage() {
     )
   }, [cart])
 
-  const subTotal = items.reduce((s, it) => s + it.price * it.quantity, 0)
-  const shipping = items.length ? 0 : 0
+  const subTotal = selectedIds.reduce(
+    (s, id) => s + (items.find((it) => it.id === id)?.price ?? 0) * (items.find((it) => it.id === id)?.quantity ?? 0),
+    0
+  )
+  const shipping = selectedIds.length ? 30000 : 0
   const total = subTotal + shipping
 
   function updateQty(item: UIItem, delta: number) {
-    const nextQty = Math.max(1, item.quantity + delta)
-    dispatch(updateCart({ skuId: item.skuId, quantity: nextQty })).catch(() => {})
+    const nextQty = item.quantity + delta
+    if (nextQty <= 0) {
+      dispatch(deleteFromCart({ cartItemIds: [item.id] })).catch(() => {})
+    } else {
+      dispatch(updateCart({ body: { skuId: item.skuId, quantity: nextQty }, cartItemId: item.id })).catch(() => {})
+    }
   }
-  function removeItem(id: number) {
-    dispatch(deleteFromCart({ cartItemIds: [id] })).catch(() => {})
+  function removeItem(cartItemId: number) {
+    dispatch(deleteFromCart({ cartItemIds: [cartItemId] })).catch(() => {})
+  }
+
+  const allSelected = items.length > 0 && selectedIds.length === items.length
+  function toggleAll() {
+    setSelectedIds(allSelected ? [] : items.map((i) => i.id))
+  }
+  function toggleOne(id: number) {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
   return (
@@ -66,9 +83,18 @@ export default function CartPage() {
         <div className='grid grid-cols-1 lg:grid-cols-[1fr,360px] gap-6'>
           <section className='rounded-xl ring-1 ring-slate-200 bg-white'>
             <div className='px-4 py-3 border-b text-sm font-semibold text-slate-800'>Shopping Cart</div>
+            <div className='px-4 py-2 flex items-center gap-2 border-b text-sm'>
+              <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label='Select all items' />
+              <span>Select all</span>
+            </div>
             <div className='divide-y'>
               {items.map((it) => (
                 <div key={it.id} className='p-4 flex items-center gap-3'>
+                  <Checkbox
+                    checked={selectedIds.includes(it.id)}
+                    onCheckedChange={() => toggleOne(it.id)}
+                    aria-label={`Select item ${it.title}`}
+                  />
                   <img src={it.image} alt='' className='h-16 w-16 object-contain rounded-md ring-1 ring-slate-200' />
                   <div className='flex-1 min-w-0'>
                     <p className='text-sm font-medium text-slate-900 truncate'>{it.title}</p>
@@ -118,9 +144,7 @@ export default function CartPage() {
               <Button
                 variant='ghost'
                 className='text-rose-600 hover:bg-rose-50'
-                onClick={() =>
-                  items.length && dispatch(deleteFromCart({ cartItemIds: items.map((i) => i.id) })).catch(() => {})
-                }
+                onClick={() => items.length && dispatch(deleteFromCart({ cartItemIds: selectedIds })).catch(() => {})}
               >
                 Clear cart
               </Button>
