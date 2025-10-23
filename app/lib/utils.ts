@@ -1,7 +1,7 @@
-import { clsx, type ClassValue } from "clsx"
-import type { Path, UseFormSetError } from "react-hook-form"
-import { toast } from "sonner"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from 'clsx'
+import type { Path, UseFormSetError } from 'react-hook-form'
+import { toast } from 'sonner'
+import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -47,3 +47,6 @@ export const handleErrorApi = <T extends Record<string, unknown>>({
     toast.error('Đã xảy ra lỗi! Vui lòng thử lại sau.', { duration: duration ?? 5000 })
   }
 }
+
+const now = new Date()
+export const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`

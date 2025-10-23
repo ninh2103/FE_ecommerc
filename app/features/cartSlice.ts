@@ -8,7 +8,7 @@ import type {
 } from '~/validateSchema/cart.schema'
 
 type CartState = {
-  cart: GetCartResType['data']
+  cart: GetCartResType['data'] | null
   isLoading: boolean
   error: string | null
   page: number
@@ -18,7 +18,7 @@ type CartState = {
 }
 
 const initialState: CartState = {
-  cart: [],
+  cart: null,
   isLoading: false,
   error: null,
   page: 1,
@@ -28,7 +28,9 @@ const initialState: CartState = {
 }
 
 export const getCart = createAsyncThunk<GetCartResType, void>('cart/getCart', async () => {
+  console.log('getCart API - Calling cartApi.getCart()')
   const response = await cartApi.getCart()
+  console.log('getCart API - Response:', response)
   return response
 })
 
@@ -69,6 +71,7 @@ export const cartSlice = createSlice({
       state.limit = action.payload.limit
       state.totalItems = action.payload.totalItems
       state.totalPages = action.payload.totalPages
+      console.log('getCart.fulfilled - state.cart after update:', state.cart)
     })
     builder.addCase(getCart.rejected, (state, action) => {
       state.isLoading = false
