@@ -9,6 +9,7 @@ import { categorySlice } from '~/features/categorySlice'
 import { brandSlice } from '~/features/brandSlice'
 import { productSlice } from '~/features/productSlice'
 import { cartSlice } from '~/features/cartSlice'
+import { orderSlice } from '~/features/orderSlice'
 
 export const store = configureStore({
   reducer: {
@@ -21,7 +22,8 @@ export const store = configureStore({
     category: categorySlice.reducer,
     brand: brandSlice.reducer,
     product: productSlice.reducer,
-    cart: cartSlice.reducer
+    cart: cartSlice.reducer,
+    order: orderSlice.reducer
   }
 })
 

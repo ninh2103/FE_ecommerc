@@ -180,7 +180,7 @@ export default function CartPage() {
                 className='w-full bg-slate-900 hover:bg-slate-800 text-white'
                 disabled={selectedIds.length === 0}
                 onClick={() => {
-                  if (!selectedIds.length || !selectedShopId) return
+                  if (!selectedIds.length) return
                   navigate('/checkout', {
                     state: {
                       shopId: selectedShopId,
