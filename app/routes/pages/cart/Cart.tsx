@@ -25,7 +25,7 @@ export default function CartPage() {
   const navigate = useNavigate()
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   useEffect(() => {
-    if (!isCartLoading && (!cart || cart.length === 0)) {
+    if (!isCartLoading && cart === null) {
       dispatch(getCart()).catch(() => {})
     }
   }, [dispatch, isCartLoading, cart])
