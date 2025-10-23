@@ -4,29 +4,21 @@ import { useForm } from 'react-hook-form'
 import { useDispatch, useSelector } from 'react-redux'
 import { Button } from '../../../components/ui/button'
 import { Input } from '../../../components/ui/input'
-import { Label } from '../../../components/ui/label'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../../components/ui/form'
-import { useDispatch as useAppDispatch, useSelector as useAppSelector } from 'react-redux'
+import { Label } from '../../../components/ui/label'
 import type { AppDispatch, RootState } from '~/store'
 import { getCart, deleteFromCart } from '~/features/cartSlice'
 import { orderApi } from '~/apiRequest/order'
 import { formatVND } from '~/lib/utils'
 import { toast } from 'sonner'
+import { CreditCard, Banknote } from 'lucide-react'
+import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
 
 type ReceiverForm = {
   name: string
   phone: string
   address: string
-}
-
-type UIItem = {
-  id: number
-  skuId: number
-  title: string
-  price: number
-  quantity: number
-  image: string
-  shopId: number
+  paymentMethod: 'cash' | 'online'
 }
 
 export default function CheckoutPage() {
@@ -45,12 +37,13 @@ export default function CheckoutPage() {
     defaultValues: {
       name: '',
       phone: '',
-      address: ''
+      address: '',
+      paymentMethod: 'cash'
     }
   })
 
   useEffect(() => {
-    if (!isCartLoading && (!cart || cart.length === 0)) {
+    if (!isCartLoading && cart === null) {
       dispatch(getCart()).catch(() => {})
     }
   }, [dispatch, isCartLoading, cart])
@@ -81,11 +74,6 @@ export default function CheckoutPage() {
   }, [cart, selectedCartItemIds])
 
   // Debug log to verify data flow
-  useEffect(() => {
-    console.log('Checkout page - selectedCartItemIds:', selectedCartItemIds)
-    console.log('Checkout page - shopId:', shopId)
-    console.log('Checkout page - items:', items)
-  }, [selectedCartItemIds, shopId, items])
 
   const subTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const shipping = items.length ? 30000 : 0
@@ -96,20 +84,54 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true)
     try {
-      await orderApi.createOrder([
+      // Tạo đơn hàng trước
+      const orderResponse = await orderApi.createOrder([
         {
           shopId: shopId || null,
           cartItemsIds: selectedCartItemIds,
-          receiver: data
+          receiver: {
+            name: data.name,
+            phone: data.phone,
+            address: data.address
+          }
         }
       ])
 
-      toast.success('Order created successfully!')
-      // Clear selected items from cart after successful order
-      if (selectedCartItemIds && selectedCartItemIds.length > 0) {
-        dispatch(deleteFromCart({ cartItemIds: selectedCartItemIds })).catch(() => {})
+      // Lấy order ID từ response (giả sử response có structure như vậy)
+      const orderId = orderResponse.orders[0].id // Fallback nếu không có ID
+
+      // Nếu thanh toán online, chuyển đến trang payment
+      if (data.paymentMethod === 'online') {
+        // Chuyển đến trang payment với thông tin order
+        navigate('/payment', {
+          state: {
+            orderId,
+            total,
+            receiver: {
+              name: data.name,
+              phone: data.phone,
+              address: data.address
+            },
+            items: items.map((item) => ({
+              id: item.id,
+              title: item.title,
+              price: item.price,
+              quantity: item.quantity,
+              image: item.image
+            }))
+          }
+        })
+        return
+      } else {
+        // Thanh toán tiền mặt - hoàn thành đơn hàng
+        toast.success('Order created successfully!')
+
+        //Clear selected items from cart after successful order
+        if (selectedCartItemIds && selectedCartItemIds.length > 0) {
+          dispatch(deleteFromCart({ cartItemIds: selectedCartItemIds })).catch(() => {})
+        }
+        navigate('/cart')
       }
-      navigate('/cart')
     } catch (error) {
       toast.error('Failed to create order')
       console.error('Order creation error:', error)
@@ -153,10 +175,11 @@ export default function CheckoutPage() {
         <span className='text-slate-700'>Checkout</span>
       </nav>
 
-      <div className='grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-8'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+        {/* Left side - Customer Information */}
         <section className='space-y-6'>
           <div className='rounded-xl ring-1 ring-slate-200 bg-white p-6'>
-            <h2 className='text-lg font-semibold text-slate-800 mb-4'>Receiver Information</h2>
+            <h2 className='text-lg font-semibold text-slate-800 mb-4'>Thông tin người nhận</h2>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
                 <FormField
@@ -165,9 +188,9 @@ export default function CheckoutPage() {
                   rules={{ required: 'Name is required' }}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>Họ và tên</FormLabel>
                       <FormControl>
-                        <Input placeholder='Enter your full name' {...field} />
+                        <Input placeholder='Nhập họ và tên' {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -185,9 +208,9 @@ export default function CheckoutPage() {
                   }}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel>Số điện thoại</FormLabel>
                       <FormControl>
-                        <Input placeholder='Enter your phone number' {...field} />
+                        <Input placeholder='Nhập số điện thoại' {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -199,58 +222,94 @@ export default function CheckoutPage() {
                   rules={{ required: 'Address is required' }}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>Địa chỉ</FormLabel>
                       <FormControl>
-                        <Input placeholder='Enter your address' {...field} />
+                        <Input placeholder='Nhập địa chỉ nhận hàng' {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {/* Payment Method Selection */}
+                <div className='space-y-3'>
+                  <Label className='text-sm font-medium text-slate-700'>Phương thức thanh toán</Label>
+                  <FormField
+                    control={form.control}
+                    name='paymentMethod'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <RadioGroup onValueChange={field.onChange} value={field.value} className='space-y-3'>
+                            <div className='flex items-center space-x-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50'>
+                              <RadioGroupItem value='cash' id='cash' />
+                              <Label htmlFor='cash' className='flex items-center gap-2 cursor-pointer'>
+                                <Banknote className='h-4 w-4 text-green-600' />
+                                <span>Thanh toán khi nhận hàng</span>
+                              </Label>
+                            </div>
+                            <div className='flex items-center space-x-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50'>
+                              <RadioGroupItem value='online' id='online' />
+                              <Label htmlFor='online' className='flex items-center gap-2 cursor-pointer'>
+                                <CreditCard className='h-4 w-4 text-blue-600' />
+                                <span>Thanh toán online</span>
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <Button
                   type='submit'
                   className='w-full bg-slate-900 hover:bg-slate-800 text-white'
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Creating Order...' : 'Place Order'}
+                  {isSubmitting ? 'Đang xử lý...' : 'Đặt hàng'}
                 </Button>
               </form>
             </Form>
           </div>
         </section>
 
-        <aside className='rounded-xl ring-1 ring-slate-200 bg-white h-max'>
-          <div className='px-4 py-3 border-b text-sm font-semibold text-slate-800'>Order Summary</div>
-          <div className='p-4 space-y-4'>
-            <div className='space-y-3 max-h-64 overflow-y-auto'>
-              {items.map((item) => (
-                <div key={item.id} className='flex items-center gap-3'>
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className='h-12 w-12 object-contain rounded-md ring-1 ring-slate-200'
-                  />
-                  <div className='flex-1 min-w-0'>
-                    <p className='text-sm font-medium text-slate-900 truncate'>{item.title}</p>
-                    <p className='text-xs text-slate-500'>Qty: {item.quantity}</p>
-                    <p className='text-xs text-slate-500'>Price: {formatVND(item.price)}</p>
+        {/* Right side - Order Summary */}
+        <aside className='space-y-6'>
+          <div className='rounded-xl ring-1 ring-slate-200 bg-white'>
+            <div className='px-4 py-3 border-b text-sm font-semibold text-slate-800'>Thông tin đơn hàng</div>
+            <div className='p-4 space-y-4'>
+              <div className='space-y-3 max-h-64 overflow-y-auto'>
+                {items.map((item) => (
+                  <div key={item.id} className='flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50'>
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className='h-12 w-12 object-contain rounded-md ring-1 ring-slate-200'
+                    />
+                    <div className='flex-1 min-w-0'>
+                      <p className='text-sm font-medium text-slate-900 truncate'>{item.title}</p>
+                      <p className='text-xs text-slate-500'>Số lượng: {item.quantity}</p>
+                      <p className='text-xs text-slate-500'>Giá: {formatVND(item.price)}</p>
+                    </div>
+                    <div className='text-sm font-semibold text-slate-900'>{formatVND(item.price * item.quantity)}</div>
                   </div>
-                  <div className='text-sm font-semibold text-slate-900'>{formatVND(item.price * item.quantity)}</div>
+                ))}
+              </div>
+              <div className='space-y-3 text-sm border-t pt-4'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-slate-600'>Tạm tính</span>
+                  <span className='font-semibold text-slate-900'>{formatVND(subTotal)}</span>
                 </div>
-              ))}
-            </div>
-            <div className='space-y-3 text-sm border-t pt-4'>
-              <div className='flex items-center justify-between'>
-                <span className='text-slate-600'>Subtotal</span>
-                <span className='font-semibold text-slate-900'>{formatVND(subTotal)}</span>
-              </div>
-              <div className='flex items-center justify-between'>
-                <span className='text-slate-600'>Shipping</span>
-                <span className='font-semibold text-slate-900'>{formatVND(shipping)}</span>
-              </div>
-              <div className='flex items-center justify-between border-t pt-3'>
-                <span className='text-slate-900 font-semibold'>Total</span>
-                <span className='text-lg font-bold text-slate-900'>{formatVND(total)}</span>
+                <div className='flex items-center justify-between'>
+                  <span className='text-slate-600'>Phí vận chuyển</span>
+                  <span className='font-semibold text-slate-900'>{formatVND(shipping)}</span>
+                </div>
+                <div className='flex items-center justify-between border-t pt-3'>
+                  <span className='text-slate-900 font-semibold'>Tổng cộng</span>
+                  <span className='text-lg font-bold text-slate-900'>{formatVND(total)}</span>
+                </div>
               </div>
             </div>
           </div>

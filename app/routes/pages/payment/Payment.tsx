@@ -1,172 +1,244 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import { useState, useEffect } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { Button } from '../../../components/ui/button'
+import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group'
+import { Label } from '~/components/ui/label'
+import { formattedDate, formatVND } from '~/lib/utils'
+import { toast } from 'sonner'
+import { CreditCard, Banknote, ArrowLeft } from 'lucide-react'
+import type { WebhookPaymentBodyType } from '~/validateSchema/payment.schema'
+import { useDispatch, useSelector } from 'react-redux'
+import type { AppDispatch, RootState } from '~/store'
+import { receivePayment } from '~/features/paymentSlice'
 
-export default function PaymentPage() {
-	const items = [
-		{ id: '1', title: 'Marketside Fresh Organic Bananas, Bunch × 1', price: 0.89 },
-	]
-	const shippingMethods = [
-		{ id: 'flat', label: 'Flat rate', price: 15.5 },
-		{ id: 'pickup', label: 'Local pickup', price: 0 },
-	]
-	const [shipping, setShipping] = useState('flat')
-	const subTotal = useMemo(() => items.reduce((s, i) => s + i.price, 0), [items])
-	const shippingPrice = useMemo(() => shippingMethods.find((m) => m.id === shipping)?.price ?? 0, [shipping])
-	const total = subTotal + shippingPrice
-
-	const inputCls = 'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2'
-	const checkLbl = 'flex items-center gap-2 text-xs text-slate-700'
-
-	return (
-		<div className='container mx-auto px-4 py-6 md:py-8'>
-			<nav className='text-xs text-slate-500 mb-4'>
-				<Link to='/'>Home</Link>
-				<span className='mx-1'>›</span>
-				<span className='text-slate-700'>Checkout</span>
-			</nav>
-
-			<div className='rounded-md border text-sm text-slate-700 bg-slate-50 px-3 py-2 mb-3'>
-				Have a coupon? Click here to enter your code
-			</div>
-			<div className='rounded-md border text-xs text-rose-600 bg-rose-50 px-3 py-2 mb-6'>
-				Add <span className='font-semibold'>$299.11</span> to cart and get free shipping!
-			</div>
-
-			<div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-				<section className='rounded-xl ring-1 ring-slate-200 bg-white order-1 lg:order-none'>
-					<div className='px-4 py-3 border-b text-sm font-semibold text-slate-800'>Billing details</div>
-					<div className='p-4 grid grid-cols-1 md:grid-cols-2 gap-4'>
-						<Field label='First name *'>
-							<input className={inputCls} placeholder='' />
-						</Field>
-						<Field label='Last name *'>
-							<input className={inputCls} placeholder='' />
-						</Field>
-						<Field label='Company name (optional)' className='md:col-span-2'>
-							<input className={inputCls} placeholder='' />
-						</Field>
-						<Field label='Country / Region *' className='md:col-span-2'>
-							<select className={inputCls}>
-								<option>United States (US)</option>
-							</select>
-						</Field>
-						<Field label='Street address *' className='md:col-span-2'>
-							<input className={inputCls} placeholder='House number and street name' />
-						</Field>
-						<Field label='Apartment, suite, unit, etc. (optional)' className='md:col-span-2'>
-							<input className={inputCls} placeholder='' />
-						</Field>
-						<Field label='Town / City *' className='md:col-span-2'>
-							<input className={inputCls} placeholder='' />
-						</Field>
-						<Field label='State *'>
-							<select className={inputCls}>
-								<option>California</option>
-							</select>
-						</Field>
-						<Field label='ZIP Code *'>
-							<input className={inputCls} placeholder='' />
-						</Field>
-						<Field label='Phone *' className='md:col-span-2'>
-							<input className={inputCls} placeholder='' />
-						</Field>
-						<Field label='Email address *' className='md:col-span-2'>
-							<input className={inputCls} placeholder='' />
-						</Field>
-
-						<div className='md:col-span-2 space-y-2'>
-							<label className={checkLbl}>
-								<input type='checkbox' />
-								<span>Create an account?</span>
-							</label>
-							<label className={checkLbl}>
-								<input type='checkbox' />
-								<span>Ship to a different address?</span>
-							</label>
-						</div>
-
-						<Field label='Order notes (optional)' className='md:col-span-2'>
-							<textarea className={inputCls} placeholder='Notes about your order, e.g. special notes for delivery.' rows={3} />
-						</Field>
-					</div>
-				</section>
-
-				<aside className='rounded-xl ring-1 ring-slate-200 bg-white h-max order-2 lg:order-none lg:sticky lg:top-28'>
-					<div className='px-4 py-3 border-b text-sm font-semibold text-slate-800'>Your order</div>
-					<div className='p-4 space-y-3 text-sm'>
-						<div className='border rounded'>
-							<div className='flex items-center justify-between px-3 py-2 text-xs text-slate-500 border-b'>
-								<span>Product</span>
-								<span>Subtotal</span>
-							</div>
-							{items.map((i) => (
-								<div key={i.id} className='flex items-center justify-between px-3 py-2'>
-									<span className='text-slate-700'>{i.title}</span>
-									<span className='font-medium text-slate-900'>${i.price.toFixed(2)}</span>
-								</div>
-							))}
-							<div className='flex items-center justify-between px-3 py-2'>
-								<span className='text-slate-600'>Subtotal</span>
-								<span className='font-medium text-slate-900'>${subTotal.toFixed(2)}</span>
-							</div>
-							<div className='px-3 py-2 space-y-1'>
-								<div className='text-slate-600'>Shipping:</div>
-								<div className='space-y-1'>
-									{shippingMethods.map((m) => (
-										<label key={m.id} className='flex items-center justify-between gap-2'>
-											<span className='inline-flex items-center gap-2'>
-												<input type='radio' name='shipping' checked={shipping===m.id} onChange={() => setShipping(m.id)} />
-												<span className='text-sm'>{m.label}</span>
-											</span>
-											<span className='text-sm text-slate-600'>{m.price ? `$${m.price.toFixed(2)}` : '—'}</span>
-										</label>
-									))}
-								</div>
-							</div>
-							<div className='flex items-center justify-between px-3 py-2 border-t'>
-								<span className='text-slate-900 font-semibold'>Total</span>
-								<span className='text-lg font-bold text-slate-900'>${total.toFixed(2)}</span>
-							</div>
-						</div>
-
-						<div className='mt-4 space-y-2'>
-							<label className={checkLbl}>
-								<input type='radio' name='pay' defaultChecked />
-								<span>Direct Bank Transfer</span>
-							</label>
-							<p className='text-xs text-slate-500'>Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order will not be shipped until the funds have cleared in our account.</p>
-
-							<label className={checkLbl}>
-								<input type='radio' name='pay' />
-								<span>Check Payments</span>
-							</label>
-							<label className={checkLbl}>
-								<input type='radio' name='pay' />
-								<span>Cash On Delivery</span>
-							</label>
-
-							<p className='text-xs text-slate-500'>Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our <a className='underline' href='#'>privacy policy</a>.</p>
-
-							<label className={checkLbl}>
-								<input type='checkbox' />
-								<span>I have read and agree to the website <a className='underline' href='#'>terms and conditions</a> *</span>
-							</label>
-
-							<Button className='w-full bg-slate-900 hover:bg-slate-800 text-white mt-2'>Place order</Button>
-						</div>
-					</div>
-				</aside>
-			</div>
-		</div>
-	)
+type PaymentData = {
+  orderId: number
+  total: number
+  receiver: {
+    name: string
+    phone: string
+    address: string
+  }
+  items: Array<{
+    id: number
+    title: string
+    price: number
+    quantity: number
+    image: string
+  }>
 }
 
-function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
-	return (
-		<div className={className}>
-			<label className='block text-xs text-slate-700 mb-1'>{label}</label>
-			{children}
-		</div>
-	)
+export default function PaymentPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const dispatch = useDispatch<AppDispatch>()
+  const transactions = useSelector((s: RootState) => s.payment.transactions)
+  const isLoading = useSelector((s: RootState) => s.payment.isLoading)
+  const error = useSelector((s: RootState) => s.payment.error)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState('bank_transfer')
+
+  // Lấy dữ liệu từ Checkout page
+  const paymentData = location.state as PaymentData | null
+
+  // Redirect nếu không có dữ liệu
+  useEffect(() => {
+    if (!paymentData) {
+      navigate('/checkout')
+    }
+  }, [paymentData, navigate])
+
+  if (!paymentData) {
+    return (
+      <div className='container mx-auto px-4 py-8'>
+        <div className='text-center'>
+          <h2 className='text-2xl font-semibold text-slate-900 mb-4'>Không tìm thấy thông tin đơn hàng</h2>
+          <Button onClick={() => navigate('/checkout')} className='bg-slate-900 hover:bg-slate-800 text-white'>
+            Quay lại Checkout
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  const { orderId, total, receiver, items } = paymentData
+  const subTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const shipping = 30000
+  const finalTotal = total
+
+  const handlePayment = async () => {
+    setIsProcessing(true)
+    try {
+      const paymentBody: WebhookPaymentBodyType = {
+        id: orderId + 1, // số tự tăng (tự tăng)
+        gateway: paymentMethod,
+        transactionDate: formattedDate, // ngày thanh toán
+        accountNumber: '0123499999', // số tài khoản
+        code: null, // mã code
+        content: `DH${orderId}`, // nội dung thanh toán
+        transferType: 'in' as const, // in: nạp, out: rút
+        transferAmount: 200000, // số tiền thanh toán
+        accumulated: 19077000, // số tiền tích lũy
+        subAccount: null, // số tài khoản con
+        referenceCode: 'MBVCB.3278907687', // mã reference
+        description: `Thanh toán đơn hàng DH${orderId}` // nội dung thanh toán
+      }
+
+      await dispatch(receivePayment(paymentBody)).unwrap()
+      toast.success('Thanh toán thành công!')
+
+      //navigate('/cart')
+    } catch (error) {
+      toast.error('Thanh toán thất bại')
+      console.error('Payment error:', error)
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  return (
+    <div className='container mx-auto px-4 py-6 md:py-8'>
+      <nav className='text-xs text-slate-500 mb-4'>
+        <Link to='/'>Home</Link>
+        <span className='mx-1'>›</span>
+        <Link to='/checkout'>Checkout</Link>
+        <span className='mx-1'>›</span>
+        <span className='text-slate-700'>Payment</span>
+      </nav>
+
+      <div className='flex items-center gap-4 mb-6'>
+        <Button variant='outline' onClick={() => navigate('/checkout')} className='flex items-center gap-2'>
+          <ArrowLeft className='h-4 w-4' />
+          Quay lại
+        </Button>
+        <h1 className='text-2xl font-bold text-slate-900'>Xác nhận thanh toán</h1>
+      </div>
+
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+        {/* Left side - Payment Method */}
+        <section className='space-y-6'>
+          <div className='rounded-xl ring-1 ring-slate-200 bg-white p-6'>
+            <h2 className='text-lg font-semibold text-slate-800 mb-4'>Phương thức thanh toán</h2>
+
+            <div className='space-y-4'>
+              <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+                <div className='flex items-center space-x-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50'>
+                  <RadioGroupItem value='bank_transfer' id='bank_transfer' />
+                  <Label htmlFor='bank_transfer' className='flex items-center gap-2 cursor-pointer'>
+                    <CreditCard className='h-4 w-4 text-blue-600' />
+                    <span>Vietcombank</span>
+                  </Label>
+                </div>
+                <div className='flex items-center space-x-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50'>
+                  <RadioGroupItem value='momo' id='momo' />
+                  <Label htmlFor='momo' className='flex items-center gap-2 cursor-pointer'>
+                    <Banknote className='h-4 w-4 text-pink-600' />
+                    <span>Ví MoMo</span>
+                  </Label>
+                </div>
+                <div className='flex items-center space-x-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50'>
+                  <RadioGroupItem value='zalopay' id='zalopay' />
+                  <Label htmlFor='zalopay' className='flex items-center gap-2 cursor-pointer'>
+                    <CreditCard className='h-4 w-4 text-green-600' />
+                    <span>ZaloPay</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className='mt-6 p-4 bg-blue-50 rounded-lg'>
+              <h3 className='text-sm font-semibold text-blue-900 mb-2'>Thông tin chuyển khoản</h3>
+              <div className='text-sm text-blue-800 space-y-1'>
+                <p>
+                  <strong>Ngân hàng:</strong> Vietcombank
+                </p>
+                <p>
+                  <strong>Số tài khoản:</strong> 1234567890
+                </p>
+                <p>
+                  <strong>Chủ tài khoản:</strong> Công ty ABC
+                </p>
+                <p>
+                  <strong>Nội dung:</strong> DH{orderId}
+                </p>
+                <p>
+                  <strong>Số tiền:</strong> {formatVND(finalTotal)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Right side - Order Summary */}
+        <aside className='space-y-6'>
+          <div className='rounded-xl ring-1 ring-slate-200 bg-white'>
+            <div className='px-4 py-3 border-b text-sm font-semibold text-slate-800'>Thông tin đơn hàng</div>
+            <div className='p-4 space-y-4'>
+              <div className='space-y-3 max-h-64 overflow-y-auto'>
+                {items.map((item) => (
+                  <div key={item.id} className='flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50'>
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className='h-12 w-12 object-contain rounded-md ring-1 ring-slate-200'
+                    />
+                    <div className='flex-1 min-w-0'>
+                      <p className='text-sm font-medium text-slate-900 truncate'>{item.title}</p>
+                      <p className='text-xs text-slate-500'>Số lượng: {item.quantity}</p>
+                      <p className='text-xs text-slate-500'>Giá: {formatVND(item.price)}</p>
+                    </div>
+                    <div className='text-sm font-semibold text-slate-900'>{formatVND(item.price * item.quantity)}</div>
+                  </div>
+                ))}
+              </div>
+              <div className='space-y-3 text-sm border-t pt-4'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-slate-600'>Tạm tính</span>
+                  <span className='font-semibold text-slate-900'>{formatVND(subTotal)}</span>
+                </div>
+                <div className='flex items-center justify-between'>
+                  <span className='text-slate-600'>Phí vận chuyển</span>
+                  <span className='font-semibold text-slate-900'>{formatVND(shipping)}</span>
+                </div>
+                <div className='flex items-center justify-between border-t pt-3'>
+                  <span className='text-slate-900 font-semibold'>Tổng cộng</span>
+                  <span className='text-lg font-bold text-slate-900'>{formatVND(finalTotal)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Receiver Information */}
+          <div className='rounded-xl ring-1 ring-slate-200 bg-white p-4'>
+            <h3 className='text-sm font-semibold text-slate-800 mb-3'>Thông tin người nhận</h3>
+            <div className='space-y-2 text-sm text-slate-600'>
+              <p>
+                <strong>Họ tên:</strong> {receiver.name}
+              </p>
+              <p>
+                <strong>Số điện thoại:</strong> {receiver.phone}
+              </p>
+              <p>
+                <strong>Địa chỉ:</strong> {receiver.address}
+              </p>
+            </div>
+          </div>
+
+          {/* Payment Button */}
+          <div className='rounded-xl ring-1 ring-slate-200 bg-white p-4'>
+            <Button
+              onClick={handlePayment}
+              disabled={isProcessing}
+              className='w-full bg-slate-900 hover:bg-slate-800 text-white'
+            >
+              {isProcessing ? 'Đang xử lý...' : `Thanh toán ${formatVND(finalTotal)}`}
+            </Button>
+            <p className='text-xs text-slate-500 mt-2 text-center'>
+              Bằng cách thanh toán, bạn đồng ý với các điều khoản và điều kiện của chúng tôi.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  )
 }
