@@ -71,7 +71,7 @@ export default function PaymentPage() {
     try {
       const paymentBody: WebhookPaymentBodyType = {
         id: orderId + 1, // số tự tăng (tự tăng)
-        gateway: paymentMethod,
+        gateway: paymentMethod as 'bank_transfer' | 'momo' | 'zalopay',
         transactionDate: formattedDate, // ngày thanh toán
         accountNumber: '0123499999', // số tài khoản
         code: null, // mã code
@@ -87,7 +87,7 @@ export default function PaymentPage() {
       await dispatch(receivePayment(paymentBody)).unwrap()
       toast.success('Thanh toán thành công!')
 
-      //navigate('/cart')
+      navigate('/cart')
     } catch (error) {
       toast.error('Thanh toán thất bại')
       console.error('Payment error:', error)
@@ -121,7 +121,10 @@ export default function PaymentPage() {
             <h2 className='text-lg font-semibold text-slate-800 mb-4'>Phương thức thanh toán</h2>
 
             <div className='space-y-4'>
-              <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+              <RadioGroup
+                value={paymentMethod}
+                onValueChange={(value) => setPaymentMethod(value as 'bank_transfer' | 'momo' | 'zalopay')}
+              >
                 <div className='flex items-center space-x-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50'>
                   <RadioGroupItem value='bank_transfer' id='bank_transfer' />
                   <Label htmlFor='bank_transfer' className='flex items-center gap-2 cursor-pointer'>

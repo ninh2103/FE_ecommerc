@@ -14,7 +14,9 @@ export default [
       { path: 'login', file: 'routes/auth/login/Login.tsx' },
       { path: 'register', file: 'routes/auth/register/Register.tsx' },
       { path: 'forgot-password', file: 'routes/auth/forgot/ForgotPassword.tsx' },
-      { path: 'checkout', file: 'routes/pages/checkout/Checkout.tsx' }
+      { path: 'checkout', file: 'routes/pages/checkout/Checkout.tsx' },
+      { path: 'orders', file: 'routes/pages/orders/Orders.tsx' },
+      { path: 'orders/:orderId', file: 'routes/pages/orders/OrderDetail.tsx' }
     ]
   },
   {
