@@ -7,26 +7,44 @@ import { getProductById, getProducts } from '~/features/productSlice'
 import { useEffect, useMemo, useState } from 'react'
 import type { ProductType } from '~/validateSchema/product.schema'
 import { AddToCartBodySchema, type AddToCartBodyType } from '~/validateSchema/cart.schema'
-import { useForm, type UseFormReturn } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { addToCart } from '~/features/cartSlice'
-import { cn, handleErrorApi } from '~/lib/utils'
+import { cn, formatVND, handleErrorApi } from '~/lib/utils'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
+import { PATH } from '~/constant/path'
 
 export default function ProductDetailPage() {
   const { id } = useParams()
   const dispatch = useDispatch<AppDispatch>()
   const products = useSelector((s: RootState) => s.product.data)
+
   const isProductLoading = useSelector((s: RootState) => s.product.isLoading)
+
+  // Gọi getProductById để lấy dữ liệu chi tiết của sản phẩm hiện tại
   useEffect(() => {
-    if (id && !isProductLoading && (!products || products.length === 0)) {
-      dispatch(getProductById(Number(id))).catch(() => {})
+    if (id) {
+      const productId = Number(id)
+      const existingProduct = products.find((p: ProductType) => p.id === productId)
+
+      // Nếu chưa có product hoặc product không có đầy đủ thông tin (brand, categories)
+      if (!existingProduct || !(existingProduct as any).brand) {
+        dispatch(getProductById(productId)).catch(() => {})
+      }
     }
-  }, [dispatch, id, isProductLoading, products])
+  }, [dispatch, id, products])
+
+  // Gọi getProducts để có dữ liệu cho Related products (chỉ khi cần)
   useEffect(() => {
-    if (!isProductLoading && (!products || products.length === 0)) dispatch(getProducts()).catch(() => {})
-  }, [dispatch, isProductLoading, products])
+    if (!isProductLoading && products.length === 0) {
+      dispatch(getProducts()).catch(() => {})
+    }
+  }, [dispatch, isProductLoading, products.length])
+
+  // Tìm product hiện tại trong store
+  // - Nếu từ getProductById: có brand, categories, skus (GetProductDetailResType)
+  // - Nếu từ getProducts: chỉ có thông tin cơ bản (GetProductsResType['data'])
   const product = products.find((p: ProductType) => p.id === Number(id))
   const [qty, setQty] = useState(1)
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({})
@@ -75,10 +93,10 @@ export default function ProductDetailPage() {
   return (
     <div className='container mx-auto px-4 py-6 md:py-8'>
       {/* Breadcrumbs */}
-      <nav className='text-xs text-slate-500 mb-4'>
-        <span>Home</span>
-        <span className='mx-1'>/</span>
-        <span>Brand #{product?.brandId ?? '—'}</span>
+      <nav className='text-xs text-slate-500 mb-4 cursor-pointer'>
+        <Link to={PATH.HOME}>
+          <span>Home</span>
+        </Link>
         <span className='mx-1'>/</span>
         <span className='text-slate-700'>{product?.name ?? 'Product'}</span>
       </nav>
@@ -114,7 +132,10 @@ export default function ProductDetailPage() {
         <section className='lg:col-span-3'>
           <h1 className='text-xl md:text-2xl font-extrabold text-slate-900'>{product?.name ?? '—'}</h1>
           <div className='mt-1 flex items-center gap-3 text-xs text-slate-500'>
-            <span>Brand ID: {product?.brandId ?? '—'}</span>
+            <span>Brand: {(product as any)?.brand?.name ?? `#${product?.brandId ?? '—'}`}</span>
+            {(product as any)?.categories && (product as any).categories.length > 0 && (
+              <span>• Category: {(product as any).categories.map((cat: any) => cat.name).join(', ')}</span>
+            )}
             {product?.publishAt && <span>• Phát hành: {new Date(product.publishAt).toLocaleDateString('vi-VN')}</span>}
           </div>
 
@@ -128,8 +149,6 @@ export default function ProductDetailPage() {
               </span>
             ) : null}
           </div>
-
-          <p className='mt-3 text-sm text-slate-600 max-w-prose'>Mã thương hiệu: {product?.brandId ?? '—'}.</p>
 
           {/* Variants */}
           {product?.variants && product.variants.length > 0 && (
@@ -160,7 +179,7 @@ export default function ProductDetailPage() {
               {/* Current combination preview */}
               {(product as any)?.skus && (
                 <div className='text-xs text-slate-600'>
-                  Chọn: {product.variants.map((v) => selectedOptions[v.value]).join('-') || '—'}
+                  Đã Chọn: {product.variants.map((v) => selectedOptions[v.value]).join('-') || '—'}
                 </div>
               )}
             </div>
@@ -237,7 +256,11 @@ export default function ProductDetailPage() {
           <button className='px-4 py-3 font-medium text-slate-900 border-b-2 border-slate-900'>Mô tả</button>
         </div>
         <div className='p-4 text-sm text-slate-600'>
-          Sản phẩm: {product?.name ?? '—'}. Thương hiệu ID: {product?.brandId ?? '—'}.
+          Sản phẩm: {product?.name ?? '—'}. Thương hiệu:{' '}
+          {(product as any)?.brand?.name ?? `#${product?.brandId ?? '—'}`}.
+          {(product as any)?.categories && (product as any).categories.length > 0 && (
+            <span> Danh mục: {(product as any).categories.map((cat: any) => cat.name).join(', ')}.</span>
+          )}
         </div>
       </div>
 
@@ -245,9 +268,12 @@ export default function ProductDetailPage() {
       <section className='mt-8'>
         <h2 className='text-lg md:text-xl font-semibold text-slate-900 mb-3'>Related products</h2>
         <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4'>
-          {products.map((p) => (
-            <RelatedCard key={p.id} p={p as ProductType} />
-          ))}
+          {products
+            .filter((p) => p.id !== Number(id)) // Loại bỏ sản phẩm hiện tại
+            .slice(0, 6) // Chỉ hiển thị 6 sản phẩm
+            .map((p) => (
+              <RelatedCard key={p.id} p={p as ProductType} />
+            ))}
         </div>
       </section>
     </div>
@@ -257,11 +283,7 @@ export default function ProductDetailPage() {
 function RelatedCard({ p }: { p: ProductType }) {
   return (
     <div className='group relative bg-white rounded-xl ring-1 ring-slate-200 hover:ring-slate-300 transition-all'>
-      <div className='absolute top-2 left-2 z-10'>
-        <span className='text-[10px] font-semibold text-rose-600 bg-rose-100 rounded px-1.5 py-0.5'>
-          {p.variants[0].value}
-        </span>
-      </div>
+      <div className='absolute top-2 left-2 z-10'></div>
       <div className='aspect-square p-3'>
         <img
           src={p.images[0]}
@@ -273,12 +295,11 @@ function RelatedCard({ p }: { p: ProductType }) {
         <h3 className='text-[12px] font-medium text-slate-900 line-clamp-2 h-8'>{p.name}</h3>
         <div className='mt-1 flex items-center justify-between'>
           <div className='flex items-baseline gap-1.5'>
-            <span className='text-[14px] font-semibold text-slate-900'>${p.basePrice}</span>
-            <span className='text-[11px] text-slate-400 line-through'>${p.virtualPrice}</span>
+            <span className='text-[14px] font-semibold text-slate-900'>{formatVND(p.basePrice)}</span>
+            <span className='text-[11px] text-slate-400 line-through'>{formatVND(p.virtualPrice)}</span>
           </div>
           <Link to={`/product/${p.id}`}>
-            <Button className='h-8 px-3 gap-1 bg-slate-900 hover:bg-slate-800 text-white'>
-              <ShoppingCart className='h-4 w-4' />
+            <Button className='h-8 px-3 gap-1 bg-slate-900 hover:bg-slate-800 text-white cursor-pointer'>
               <span className='text-[11px]'>View</span>
             </Button>
           </Link>

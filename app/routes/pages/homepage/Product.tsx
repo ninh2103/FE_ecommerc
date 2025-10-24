@@ -6,6 +6,7 @@ import { getProducts } from '~/features/productSlice'
 import { useEffect } from 'react'
 import type { ProductType } from '~/validateSchema/product.schema'
 import { Link } from 'react-router'
+import { formatVND } from '~/lib/utils'
 
 export default function ProductSection() {
   const dispatch = useDispatch<AppDispatch>()
@@ -38,7 +39,6 @@ export default function ProductSection() {
 }
 
 function ProductCard({ product }: { product: ProductType }) {
-  const priceFmt = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
   const image = (product.images && product.images[0]) || '/placeholder.png'
   return (
     <div className='group relative bg-white rounded-xl ring-1 ring-slate-100 hover:ring-slate-200 transition-all duration-200 hover:shadow-lg'>
@@ -58,13 +58,9 @@ function ProductCard({ product }: { product: ProductType }) {
         {/* Price (basePrice with optional virtualPrice strike-through) */}
         <div className='flex items-center justify-between mb-3'>
           <div className='flex items-baseline gap-2'>
-            <span className='text-lg font-semibold text-slate-900'>
-              {priceFmt.format(Number(product.basePrice || 0))}
-            </span>
+            <span className='text-lg font-semibold text-slate-900'>{formatVND(product.basePrice)}</span>
             {product.virtualPrice !== undefined && product.virtualPrice > 0 && (
-              <span className='text-sm text-slate-400 line-through'>
-                {priceFmt.format(Number(product.virtualPrice))}
-              </span>
+              <span className='text-sm text-slate-400 line-through'>{formatVND(product.virtualPrice)}</span>
             )}
           </div>
         </div>

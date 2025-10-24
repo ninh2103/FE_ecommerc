@@ -1,7 +1,6 @@
 import axiosClient from '~/lib/http'
 import type {
   GetProductDetailResType,
-  GetProductsQueryType,
   GetProductsResType,
   ProductType,
   UpdateProductBodyType
