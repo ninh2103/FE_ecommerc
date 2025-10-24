@@ -31,7 +31,7 @@ export const handleErrorApi = <T extends Record<string, unknown>>({
   error,
   setError,
   duration,
-  showToastForFieldError = false // 👈 thêm tuỳ chọn này
+  showToastForFieldError = false
 }: {
   error: ApiError | any
   setError?: UseFormSetError<T>

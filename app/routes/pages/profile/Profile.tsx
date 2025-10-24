@@ -48,9 +48,11 @@ export default function ProfilePage() {
     try {
       dispatch(uploadMedia({ file: file }))
     } catch (error) {
-      handleErrorApi<any>({
-        error: error as any,
-        setError: setError
+      handleErrorApi({
+        error: error,
+        setError,
+        duration: 4000,
+        showToastForFieldError: true
       })
     }
   }
@@ -108,13 +110,15 @@ export default function ProfilePage() {
 
   const onSubmitPwd = async (body: ChangePasswordBodyType) => {
     try {
-      dispatch(changePassword(body))
-      toast('Password changed successfully!')
+      await dispatch(changePassword(body)).unwrap()
       resetPwd()
+      toast('Password changed successfully!')
     } catch (error) {
       handleErrorApi<ChangePasswordBodyType>({
-        error: error as any,
-        setError: setErrorPwd
+        error: error,
+        setError: setErrorPwd,
+        duration: 4000,
+        showToastForFieldError: true
       })
     }
   }
@@ -164,8 +168,9 @@ export default function ProfilePage() {
       toast('Updated Account Success !')
     } catch (error) {
       handleErrorApi<UpdateUserProfileBodyType>({
-        error: error as any,
-        setError: setError
+        error: error,
+        setError: setError,
+        showToastForFieldError: true
       })
     }
   }
@@ -179,9 +184,10 @@ export default function ProfilePage() {
       toast('Logout successfully!')
       navigate('/login')
     } catch (error) {
-      handleErrorApi<any>({
-        error: error as any,
-        setError: setError
+      handleErrorApi({
+        error: error,
+        setError: setError,
+        showToastForFieldError: true
       })
     }
   }
@@ -200,9 +206,10 @@ export default function ProfilePage() {
         setQrCodeUrl('')
       }
     } catch (error) {
-      handleErrorApi<any>({
-        error: error as any,
-        setError: setError
+      handleErrorApi({
+        error: error,
+        setError: setError,
+        showToastForFieldError: true
       })
       setIs2FAEnabled(false)
       setQrCodeUrl('')
@@ -219,10 +226,10 @@ export default function ProfilePage() {
       toast.success('OTP đã được gửi đến email của bạn!')
     } catch (err: unknown) {
       handleErrorApi<SendOTPBodyType>({
-        error: err as any,
-        setError: formSendOTP.setError
+        error: err,
+        setError: formSendOTP.setError,
+        showToastForFieldError: true
       })
-      toast.error('Gửi OTP thất bại, vui lòng thử lại!')
     }
   }
 
@@ -233,8 +240,9 @@ export default function ProfilePage() {
       setActiveTab('update')
     } catch (error) {
       handleErrorApi<Disable2FABodyType>({
-        error: error as any,
-        setError: setErrorDisable
+        error: error,
+        setError: setErrorDisable,
+        showToastForFieldError: true
       })
     }
   }
@@ -394,23 +402,12 @@ export default function ProfilePage() {
               </Field>
 
               <Field label='New password *'>
-                <input
-                  className={inputCls}
-                  type='password'
-                  {...registerPwd('newPassword', {
-                    required: 'New password is required',
-                    minLength: { value: 6, message: 'At least 6 characters' }
-                  })}
-                />
+                <input className={inputCls} type='password' {...registerPwd('newPassword')} />
                 {errorsPwd.newPassword && <p className='text-xs text-red-600 mt-1'>{errorsPwd.newPassword.message}</p>}
               </Field>
 
               <Field label='Confirm new password *'>
-                <input
-                  className={inputCls}
-                  type='password'
-                  {...registerPwd('confirmPassword', { required: 'Confirm password is required' })}
-                />
+                <input className={inputCls} type='password' {...registerPwd('confirmPassword')} />
                 {errorsPwd.confirmPassword && (
                   <p className='text-xs text-red-600 mt-1'>{errorsPwd.confirmPassword.message}</p>
                 )}

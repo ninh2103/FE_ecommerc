@@ -202,7 +202,7 @@ export default function CartPage() {
 function EmptyCart() {
   return (
     <div className='flex flex-col items-center justify-center py-16'>
-      <img src='https://illustrations.popsy.co/amber/empty-box-open.svg' alt='Empty cart' className='h-40 md:h-56' />
+      <img src='https://www.svgrepo.com/show/449230/shop-cart.svg' alt='Empty cart' className='h-40 md:h-56' />
       <div className='mt-4 w-full max-w-md border rounded-md px-4 py-2 text-center text-[12px] font-semibold text-rose-600'>
         YOUR CART IS CURRENTLY EMPTY.
       </div>

@@ -1,8 +1,8 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
-import { profileApi } from "~/apiRequest/profile"
-import type { ChangePasswordBodyType } from "~/validateSchema/auth.schema"
-import type { MessageResponseType } from "~/validateSchema/message.schema"
-import type { GetUserProfileResponseType, UpdateUserProfileBodyType } from "~/validateSchema/profile.chema"
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { profileApi } from '~/apiRequest/profile'
+import type { ChangePasswordBodyType } from '~/validateSchema/auth.schema'
+import type { MessageResponseType } from '~/validateSchema/message.schema'
+import type { GetUserProfileResponseType, UpdateUserProfileBodyType } from '~/validateSchema/profile.chema'
 
 interface ProfileState {
   profile: GetUserProfileResponseType | null
@@ -13,7 +13,7 @@ interface ProfileState {
 const initialState: ProfileState = {
   profile: null,
   loading: false,
-  error: null,
+  error: null
 }
 
 export const fetchProfile = createAsyncThunk<GetUserProfileResponseType, void>('profile/fetchProfile', async () => {
@@ -21,15 +21,35 @@ export const fetchProfile = createAsyncThunk<GetUserProfileResponseType, void>('
   return response
 })
 
-export const updateProfile = createAsyncThunk<GetUserProfileResponseType, UpdateUserProfileBodyType>('profile/updateProfile', async (body) => {
-  const response = await profileApi.updateProfile(body)
-  return response
-})
+export const updateProfile = createAsyncThunk<GetUserProfileResponseType, UpdateUserProfileBodyType>(
+  'profile/updateProfile',
+  async (body, { rejectWithValue }) => {
+    try {
+      const response = await profileApi.updateProfile(body)
+      return response
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.response?.data || error.message,
+        status: error.response?.status
+      })
+    }
+  }
+)
 
-export const changePassword = createAsyncThunk<MessageResponseType, ChangePasswordBodyType>('profile/changePassword', async (body) => {
-  const response = await profileApi.changePassword(body)
-  return response
-})
+export const changePassword = createAsyncThunk<MessageResponseType, ChangePasswordBodyType>(
+  'profile/changePassword',
+  async (body, { rejectWithValue }) => {
+    try {
+      const response = await profileApi.changePassword(body)
+      return response
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.response?.data || error.message,
+        status: error.response?.status
+      })
+    }
+  }
+)
 
 export const profileSlice = createSlice({
   name: 'profile',
@@ -37,7 +57,7 @@ export const profileSlice = createSlice({
   reducers: {
     setProfile: (state, action) => {
       state.profile = action.payload
-    },
+    }
   },
   extraReducers: (builder) => {
     builder

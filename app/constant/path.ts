@@ -7,5 +7,5 @@ export const PATH = {
   PRODUCT_DETAIL: '/product/:id',
   CART: '/cart',
   PAYMENT: '/payment',
-  PROFILE: '/profile',
+  PROFILE: '/profile'
 }

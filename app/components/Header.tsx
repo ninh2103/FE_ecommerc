@@ -23,7 +23,7 @@ export default function Header() {
               <div className='w-7 h-7 rounded-md bg-blue-100 grid place-items-center'>
                 <ShoppingBag className='h-4 w-4 text-blue-600' />
               </div>
-              <div className='text-xl sm:text-2xl font-bold text-blue-600'>MegaMart</div>
+              <div className='text-xl sm:text-2xl font-bold text-blue-600'>DuckMall</div>
             </div>
 
             {/* Search: icon on mobile, input on md+ */}

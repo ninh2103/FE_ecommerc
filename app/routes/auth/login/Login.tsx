@@ -54,9 +54,9 @@ export default function LoginPage() {
       toast('Đăng Nhập Thành Công!')
       navigate(PATH.HOME)
     } catch (err) {
-      handleErrorApi<LoginBodyType>({
+      handleErrorApi<SendOTPBodyType>({
         error: err,
-        setError,
+        setError: formSendOTP.setError,
         duration: 4000,
         showToastForFieldError: true
       })
@@ -74,12 +74,13 @@ export default function LoginPage() {
       await dispatch(fetchSendOtpCode(formSendOTP.getValues())).unwrap()
 
       toast.success('OTP đã được gửi đến email của bạn!')
-    } catch (err: unknown) {
-      handleErrorApi<SendOTPBodyType>({
-        error: err as any,
-        setError: formSendOTP.setError
+    } catch (err) {
+      handleErrorApi<LoginBodyType>({
+        error: err,
+        setError,
+        duration: 4000,
+        showToastForFieldError: true
       })
-      toast.error('Gửi OTP thất bại, vui lòng thử lại!')
     }
   }
   const inputCls =
@@ -90,7 +91,7 @@ export default function LoginPage() {
         {/* Tabs */}
         <div className='flex items-center justify-center gap-6 mb-6'>
           <h1 className='text-2xl font-extrabold text-slate-900'>Login</h1>
-          <Link to='/register' className='text-2xl font-semibold text-slate-400 hover:text-slate-600'>
+          <Link to={PATH.REGISTER} className='text-2xl font-semibold text-slate-400 hover:text-slate-600'>
             Register
           </Link>
         </div>
@@ -139,7 +140,7 @@ export default function LoginPage() {
               <input type='checkbox' />
               <span>Remember me</span>
             </label>
-            <Link to='/auth/forgot' className='text-xs text-slate-500 hover:text-slate-700'>
+            <Link to={PATH.FORGOT_PASSWORD} className='text-xs text-slate-500 hover:text-slate-700'>
               Lost your password?
             </Link>
           </div>
