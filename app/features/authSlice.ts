@@ -1,7 +1,18 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { authApi } from "~/apiRequest/auth";
-import type { Disable2FABodyType, Enable2FABodyType, Enable2FAResponseType, ForgotPasswordBodyType, LoginBodyType, LoginResponseType, LogoutBodyType, RegisterBodyType, RegisterResponseType, SendOTPBodyType } from "~/validateSchema/auth.schema";
-import type { MessageResponseType } from "~/validateSchema/message.schema";
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { authApi } from '~/apiRequest/auth'
+import type {
+  Disable2FABodyType,
+  Enable2FABodyType,
+  Enable2FAResponseType,
+  ForgotPasswordBodyType,
+  LoginBodyType,
+  LoginResponseType,
+  LogoutBodyType,
+  RegisterBodyType,
+  RegisterResponseType,
+  SendOTPBodyType
+} from '~/validateSchema/auth.schema'
+import type { MessageResponseType } from '~/validateSchema/message.schema'
 
 interface AuthState {
   isAuthenticated: boolean
@@ -11,57 +22,99 @@ interface AuthState {
   error: string | null
 }
 
-export const fetchLogin = createAsyncThunk<LoginResponseType,LoginBodyType>('auth/fetchLogin', async (body: LoginBodyType) => {
-  const response = await authApi.login(body)
-  return response
-})
+export const fetchLogin = createAsyncThunk<LoginResponseType, LoginBodyType>(
+  'auth/fetchLogin',
+  async (body, { rejectWithValue }) => {
+    try {
+      const response = await authApi.login(body)
+      return response
+    } catch (error: any) {
+      // Chỉ trả về data có thể serialize được
+      return rejectWithValue({
+        message: error.response?.data || error.message,
+        status: error.response?.status
+      })
+    }
+  }
+)
 
 export const fetchRegister = createAsyncThunk<RegisterResponseType, RegisterBodyType>(
   'auth/fetchRegister',
-  async (body) => {
-    const response = await authApi.register(body)
-    return response
+  async (body, { rejectWithValue }) => {
+    try {
+      const response = await authApi.register(body)
+      return response
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.response?.data || error.message,
+        status: error.response?.status
+      })
+    }
   }
 )
 
-export const fetchSendOtpCode = createAsyncThunk<MessageResponseType,SendOTPBodyType>(
+export const fetchSendOtpCode = createAsyncThunk<MessageResponseType, SendOTPBodyType>(
   'auth/fetchSendOtpCode',
-  async (body) => {
-    const response = await authApi.sendOtp(body)
-    return response
+  async (body, { rejectWithValue }) => {
+    try {
+      const response = await authApi.sendOtp(body)
+      return response
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.response?.data || error.message,
+        status: error.response?.status
+      })
+    }
   }
 )
 
-export const fetchForgotPassword = createAsyncThunk<MessageResponseType,ForgotPasswordBodyType>(
+export const fetchForgotPassword = createAsyncThunk<MessageResponseType, ForgotPasswordBodyType>(
   'auth/fetchForgotPassword',
-  async (body) => {
-    const response = await authApi.forgotPassword(body)
-    return response
+  async (body, { rejectWithValue }) => {
+    try {
+      const response = await authApi.forgotPassword(body)
+      return response
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.response?.data || error.message,
+        status: error.response?.status
+      })
+    }
   }
 )
 
-export const fetchLogout = createAsyncThunk<MessageResponseType,LogoutBodyType>(
-  'auth/fetchLogout',
-  async (body) => {
-    const response = await authApi.logout(body)
-    return response
-  }
-)
+export const fetchLogout = createAsyncThunk<MessageResponseType, LogoutBodyType>('auth/fetchLogout', async (body) => {
+  const response = await authApi.logout(body)
+  return response
+})
 
-export const fetchEnable2FA = createAsyncThunk<Enable2FAResponseType,Enable2FABodyType>(
-
+export const fetchEnable2FA = createAsyncThunk<Enable2FAResponseType, Enable2FABodyType>(
   'auth/fetchEnable2FA',
-  async (body) => {
-    const response = await authApi.enable2fa(body)
-    return response
+  async (body, { rejectWithValue }) => {
+    try {
+      const response = await authApi.enable2fa(body)
+      return response
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.response?.data || error.message,
+        status: error.response?.status
+      })
+    }
   }
 )
 
-export const fetchDisable2FA = createAsyncThunk<MessageResponseType,Disable2FABodyType>(
+export const fetchDisable2FA = createAsyncThunk<MessageResponseType, Disable2FABodyType>(
   'auth/fetchDisable2FA',
-  async (body) => {
-    const response = await authApi.disable2fa(body)
-    return response
+  async (body, { rejectWithValue }) => {
+    try {
+      const response = await authApi.disable2fa(body)
+      return response
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.response?.data || error.message,
+        status: error.response?.status
+      })
+    }
   }
 )
 
@@ -70,14 +123,13 @@ const initialState: AuthState = {
   accessToken: '',
   refreshToken: '',
   loading: false,
-  error: null,
+  error: null
 }
 
 export const authSlice = createSlice({
   name: 'auth',
   initialState,
-  reducers: {   
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchLogin.pending, (state) => {
@@ -92,7 +144,7 @@ export const authSlice = createSlice({
       })
       .addCase(fetchLogin.rejected, (state, action) => {
         state.loading = false
-        state.error = action.error.message || 'Failed to login'
+        state.error = (action.error.message as string) || 'Failed to login'
       })
 
       .addCase(fetchRegister.pending, (state) => {

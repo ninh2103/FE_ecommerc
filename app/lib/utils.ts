@@ -16,36 +16,59 @@ export const formatVND = (amount: number) => {
   }).format(amount)
 }
 
-interface ApiError extends Error {
-  response?: {
-    data?: {
-      errors?: { field: string; message: string }[]
-      message?: string
-    }
-  }
+interface ApiMessage {
+  message: string
+  path?: string
+}
+
+interface ApiError {
+  message?: any
+  response?: { data?: any }
+  status?: number
 }
 
 export const handleErrorApi = <T extends Record<string, unknown>>({
   error,
   setError,
-  duration
+  duration,
+  showToastForFieldError = false // 👈 thêm tuỳ chọn này
 }: {
-  error: ApiError
-  setError: UseFormSetError<T>
+  error: ApiError | any
+  setError?: UseFormSetError<T>
   duration?: number
+  showToastForFieldError?: boolean
 }) => {
-  if (error.response?.data?.errors) {
-    error.response.data.errors.forEach(({ field, message }) => {
-      setError?.(field as Path<T>, {
-        type: 'server',
-        message
-      })
-    })
-  } else if (error.response?.data?.message) {
-    toast.error(error.response.data.message, { duration: duration ?? 5000 })
-  } else {
-    toast.error('Đã xảy ra lỗi! Vui lòng thử lại sau.', { duration: duration ?? 5000 })
-  }
+  const data =
+    error?.response?.data || // Axios
+    error?.message || // Redux rejectWithValue
+    error // fallback
+
+  const messages: ApiMessage[] = Array.isArray(data?.message)
+    ? data.message
+    : [{ message: data?.error || 'Đã xảy ra lỗi!' }]
+
+  messages.forEach((item) => {
+    const field = item.path || 'root'
+    let msg = item.message || 'Đã xảy ra lỗi!'
+
+    // Xử lý prefix
+    if (msg.startsWith('Error.')) {
+      msg = msg.replace(/^Error\./, '')
+    }
+
+    // Nếu có field cụ thể
+    if (field !== 'root' && setError) {
+      setError(field as Path<T>, { type: 'server', message: msg })
+
+      // Nếu bạn vẫn muốn hiển thị toast cho field error
+      if (showToastForFieldError) {
+        toast.error(msg, { duration: duration ?? 5000 })
+      }
+    } else {
+      // Nếu không có field hoặc không có setError
+      toast.error(msg, { duration: duration ?? 5000 })
+    }
+  })
 }
 
 const now = new Date()

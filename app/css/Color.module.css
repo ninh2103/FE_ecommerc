@@ -1,0 +1,11 @@
+.textPrimary {
+  color: var(--color-foreground); /* Slate-800 – đậm, dùng cho tiêu đề */
+}
+
+.textSecondary {
+  color: var(--color-muted-foreground); /* Slate-500 – trung tính, dùng cho mô tả */
+}
+
+.textMuted {
+  color: var(--color-muted-foreground); /* Slate-400 – dùng cho chú thích */
+}

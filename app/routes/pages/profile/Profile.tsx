@@ -254,9 +254,12 @@ export default function ProfilePage() {
         {/* Sidebar */}
         <aside className='rounded-xl ring-1 ring-slate-200 bg-white h-max order-2 lg:order-none lg:sticky lg:top-28'>
           <div className='px-4 py-4 flex items-center gap-3 border-b'>
-            <div className='h-9 w-9 rounded-full bg-slate-100 grid place-items-center text-slate-600 font-semibold'>
-              {profile?.avatar ? <AvatarImage src={profile.avatar} /> : <span>👤</span>}
-            </div>
+            <Avatar className=' w-[45px] h-[45px] rounded-full object-cover object-center'>
+              <AvatarImage src={profile?.avatar ?? ''} />
+              <AvatarFallback className='rounded-none text-sm font-medium'>
+                {profile?.name?.charAt(0) ?? 'Avatar'}
+              </AvatarFallback>
+            </Avatar>
             <div>
               <p className='text-sm font-medium text-slate-900'>{profile?.name ?? 'Guest'}</p>
               {profile?.email && <p className='text-xs text-slate-500'>{profile.email}</p>}
