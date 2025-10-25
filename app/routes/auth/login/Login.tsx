@@ -12,10 +12,13 @@ import { handleErrorApi } from '~/lib/utils'
 import { toast } from 'sonner'
 import { PATH } from '~/constant/path'
 import { LoadingSpinner } from '~/components/ui/loading-spinner'
+import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
@@ -116,9 +119,23 @@ export default function LoginPage() {
           </div>
           {errors.email && <p className='text-xs text-red-600 mt-1'>{errors.email.message}</p>}
 
-          <div>
+          <div className='relative'>
             <label className='block text-xs text-slate-700 mb-1'>Password *</label>
-            <input type='password' className={inputCls} placeholder='' {...register('password')} />
+            <div className='relative'>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className={`${inputCls} pr-10`}
+                placeholder=''
+                {...register('password')}
+              />
+              <button
+                type='button'
+                onClick={() => setShowPassword(!showPassword)}
+                className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700'
+              >
+                {showPassword ? <Eye /> : <EyeOff />}
+              </button>
+            </div>
             {errors.password && <p className='text-xs text-red-600 mt-1'>{errors.password.message}</p>}
           </div>
 

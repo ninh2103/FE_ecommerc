@@ -14,9 +14,13 @@ import { fetchForgotPassword, fetchSendOtpCode } from '~/features/authSlice'
 import { handleErrorApi } from '~/lib/utils'
 import { LoadingSpinner } from '~/components/ui/loading-spinner'
 import { toast } from 'sonner'
+import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
   const dispatch = useDispatch<AppDispatch>()
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false)
   const {
     register,
     handleSubmit,
@@ -91,7 +95,12 @@ export default function ForgotPasswordPage() {
           <div>
             <label className='block text-xs text-slate-700 mb-1'>Email address *</label>
             <div className='flex gap-2'>
-              <input type='email' className={`${inputCls} flex-1`} placeholder='' {...register('email')} />
+              <input
+                type='email'
+                className={`${inputCls} flex-1 pr-10`}
+                placeholder='example@gmail.com'
+                {...register('email')}
+              />
               <Button
                 type='button'
                 onClick={handleSendOtp}
@@ -103,17 +112,45 @@ export default function ForgotPasswordPage() {
           </div>
           <div>
             <label className='block text-xs text-slate-700 mb-1'>OTP Code *</label>
-            <input className={inputCls} placeholder='6-digit code' {...register('code')} />
+            <input className={`${inputCls} pr-10`} placeholder='6-digit code' {...register('code')} />
             {errors.code && <p className='text-red-500'>{errors.code.message}</p>}
           </div>
           <div>
             <label className='block text-xs text-slate-700 mb-1'>New password *</label>
-            <input type='password' className={inputCls} placeholder='' {...register('newPassword')} />
+            <div className='relative'>
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                className={`${inputCls} pr-10`}
+                placeholder=''
+                {...register('newPassword')}
+              />
+              <button
+                type='button'
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className='text-xs text-slate-500 hover:text-slate-700 absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer'
+              >
+                {showNewPassword ? <Eye /> : <EyeOff />}
+              </button>
+            </div>
             {errors.newPassword && <p className='text-red-500'>{errors.newPassword.message}</p>}
           </div>
           <div>
             <label className='block text-xs text-slate-700 mb-1'>Confirm password *</label>
-            <input type='password' className={inputCls} placeholder='' {...register('confirmNewPassword')} />
+            <div className='relative'>
+              <input
+                type={showConfirmNewPassword ? 'text' : 'password'}
+                className={`${inputCls} pr-10`}
+                placeholder=''
+                {...register('confirmNewPassword')}
+              />
+              <button
+                type='button'
+                onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                className='text-xs text-slate-500 hover:text-slate-700 absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer'
+              >
+                {showConfirmNewPassword ? <Eye /> : <EyeOff />}
+              </button>
+            </div>
             {errors.confirmNewPassword && <p className='text-red-500'>{errors.confirmNewPassword.message}</p>}
           </div>
 
