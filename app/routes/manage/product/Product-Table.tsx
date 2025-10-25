@@ -186,7 +186,10 @@ function AlertDialogDeleteProduct({
 const DEFAULT_PAGE_SIZE = 10
 export default function ProductTable() {
   const dispatch = useDispatch<AppDispatch>()
-  const { data, page, limit, totalItems, totalPages, isLoading } = useSelector((s: RootState) => s.product)
+  const {
+    list: { data, page, limit, totalItems, totalPages },
+    listLoading
+  } = useSelector((s: RootState) => s.product)
   const [hasInitialFetch, setHasInitialFetch] = useState(false)
 
   useEffect(() => {
@@ -278,7 +281,7 @@ export default function ProductTable() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className='h-24 text-center'>
-                    {isLoading ? 'Loading...' : 'No results.'}
+                    {listLoading ? 'Loading...' : 'No results.'}
                   </TableCell>
                 </TableRow>
               )}
