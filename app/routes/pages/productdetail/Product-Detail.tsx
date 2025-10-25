@@ -210,7 +210,7 @@ export default function ProductDetailPage() {
             </div>
             <Link to='/cart'>
               <Button
-                className='gap-2 bg-slate-900 hover:bg-slate-800 text-white'
+                className='gap-2 bg-slate-900 hover:bg-slate-800 text-white cursor-pointer'
                 disabled={!selectedSkuId}
                 onClick={() => selectedSkuId && handleAddToCart({ skuId: selectedSkuId, quantity: qty })}
               >
@@ -218,9 +218,6 @@ export default function ProductDetailPage() {
                 Add to cart
               </Button>
             </Link>
-            <Button variant='outline' className='text-slate-900'>
-              Buy Now
-            </Button>
           </div>
 
           {/* Info rows */}
