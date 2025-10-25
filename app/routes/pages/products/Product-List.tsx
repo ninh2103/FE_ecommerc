@@ -12,12 +12,13 @@ import { ProductOrderBy, ProductSortBy } from '../../../lib/type'
 import AutoPagination from '~/components/auto-pagination'
 import { LoadingSpinner } from '~/components/ui/loading-spinner'
 import { formatVND } from '~/lib/utils'
+import type { RootState } from '~/store'
 
 export default function ProductListPage() {
   const dispatch = useDispatch()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { data: products, isLoading, totalItems, page, limit, totalPages } = useSelector((state: any) => state.product)
-
+  const { data: products, totalItems, page, limit, totalPages } = useSelector((state: RootState) => state.product.list)
+  const isProductListLoading = useSelector((state: RootState) => state.product.listLoading)
   // Initialize filters from URL params
   const [filters, setFilters] = useState<GetProductsQueryType>(() => {
     const params = Object.fromEntries(searchParams.entries())
@@ -165,7 +166,7 @@ export default function ProductListPage() {
           </div>
 
           {/* Grid products */}
-          {isLoading ? (
+          {isProductListLoading ? (
             <div className='mt-4 flex justify-center items-center h-64'>
               <LoadingSpinner size='lg' />
             </div>
