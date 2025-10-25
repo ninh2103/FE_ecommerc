@@ -2,6 +2,7 @@ import axiosClient from '~/lib/http'
 import type {
   GetProductDetailResType,
   GetProductsResType,
+  GetProductsQueryType,
   ProductType,
   UpdateProductBodyType
 } from '~/validateSchema/product.schema'
@@ -23,7 +24,25 @@ export const productApi = {
   deleteProduct: (productId: number): Promise<void> => axiosClient.delete(`${API_DELETE_PRODUCT_URL}/${productId}`),
   getManagementProductById: (productId: number): Promise<GetProductDetailResType> =>
     axiosClient.get(`${API_GET_MANAGEMENT_PRODUCT_BY_ID_URL}/${productId}`),
-  getProducts: (): Promise<GetProductsResType> => axiosClient.get(API_GET_PRODUCTS_URL),
+  getProducts: (query?: GetProductsQueryType | undefined): Promise<GetProductsResType> => {
+    // Handle array parameters manually for proper serialization
+    const params = new URLSearchParams()
+
+    if (query) {
+      Object.entries(query).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            // For arrays, add each value separately
+            value.forEach((item) => params.append(key, String(item)))
+          } else {
+            params.append(key, String(value))
+          }
+        }
+      })
+    }
+
+    return axiosClient.get(`${API_GET_PRODUCTS_URL}?${params.toString()}`)
+  },
   getProductById: (productId: number): Promise<GetProductDetailResType> =>
     axiosClient.get(`${API_GET_PRODUCT_BY_ID_URL}/${productId}`)
 }

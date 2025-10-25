@@ -3,6 +3,7 @@ import { productApi } from '~/apiRequest/product'
 import type {
   GetProductDetailResType,
   GetProductsResType,
+  GetProductsQueryType,
   ProductType,
   UpdateProductBodyType
 } from '~/validateSchema/product.schema'
@@ -55,10 +56,13 @@ export const deleteProduct = createAsyncThunk<void, number>('Product/deleteProdu
   return
 })
 
-export const getProducts = createAsyncThunk<GetProductsResType, void>('Product/getProducts', async () => {
-  const response = await productApi.getProducts()
-  return response
-})
+export const getProducts = createAsyncThunk<GetProductsResType, GetProductsQueryType | undefined>(
+  'Product/getProducts',
+  async (params) => {
+    const response = await productApi.getProducts(params)
+    return response
+  }
+)
 
 export const getProductById = createAsyncThunk<GetProductDetailResType, number>(
   'Product/getProductById',
