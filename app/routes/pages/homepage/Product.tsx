@@ -10,8 +10,8 @@ import { formatVND } from '~/lib/utils'
 
 export default function ProductSection() {
   const dispatch = useDispatch<AppDispatch>()
-  const products = useSelector((s: RootState) => s.product.data)
-  const isProductLoading = useSelector((s: RootState) => s.product.isLoading)
+  const products = useSelector((s: RootState) => s.product.list.data)
+  const isProductLoading = useSelector((s: RootState) => s.product.listLoading)
 
   useEffect(() => {
     if (!isProductLoading && (!products || products.length === 0)) dispatch(getProducts()).catch(() => {})
