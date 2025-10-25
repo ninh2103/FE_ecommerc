@@ -6,6 +6,8 @@ import type { AppDispatch, RootState } from '~/store'
 import { getProductById, getProducts } from '~/features/productSlice'
 import { useEffect, useMemo, useState } from 'react'
 import type { ProductType } from '~/validateSchema/product.schema'
+import type { CategoryIncludeTranslationType } from '~/validateSchema/category.schema'
+import type { SKUType } from '~/validateSchema/sku.schema'
 import { AddToCartBodySchema, type AddToCartBodyType } from '~/validateSchema/cart.schema'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -18,34 +20,34 @@ import { PATH } from '~/constant/path'
 export default function ProductDetailPage() {
   const { id } = useParams()
   const dispatch = useDispatch<AppDispatch>()
-  const products = useSelector((s: RootState) => s.product.data)
+  const productList = useSelector((s: RootState) => s.product.list)
+  const productDetails = useSelector((s: RootState) => s.product.details)
 
-  const isProductLoading = useSelector((s: RootState) => s.product.isLoading)
+  const isProductListLoading = useSelector((s: RootState) => s.product.listLoading)
+  const isProductDetailLoading = useSelector((s: RootState) => s.product.detailLoading)
 
   // Gọi getProductById để lấy dữ liệu chi tiết của sản phẩm hiện tại
   useEffect(() => {
     if (id) {
       const productId = Number(id)
-      const existingProduct = products.find((p: ProductType) => p.id === productId)
+      const existingProductDetail = productDetails[productId]
 
-      // Nếu chưa có product hoặc product không có đầy đủ thông tin (brand, categories)
-      if (!existingProduct || !(existingProduct as any).brand) {
+      // Nếu chưa có product detail thì gọi API
+      if (!existingProductDetail) {
         dispatch(getProductById(productId)).catch(() => {})
       }
     }
-  }, [dispatch, id, products])
+  }, [dispatch, id, productDetails])
 
   // Gọi getProducts để có dữ liệu cho Related products (chỉ khi cần)
   useEffect(() => {
-    if (!isProductLoading && products.length === 0) {
+    if (!isProductListLoading && productList.data.length === 0) {
       dispatch(getProducts()).catch(() => {})
     }
-  }, [dispatch, isProductLoading, products.length])
+  }, [dispatch, isProductListLoading, productList.data.length])
 
-  // Tìm product hiện tại trong store
-  // - Nếu từ getProductById: có brand, categories, skus (GetProductDetailResType)
-  // - Nếu từ getProducts: chỉ có thông tin cơ bản (GetProductsResType['data'])
-  const product = products.find((p: ProductType) => p.id === Number(id))
+  // Lấy product detail từ productDetails state
+  const product = id ? productDetails[Number(id)] : null
   const [qty, setQty] = useState(1)
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({})
   const [selectedSkuId, setSelectedSkuId] = useState<number | null>(null)
@@ -66,8 +68,11 @@ export default function ProductDetailPage() {
       await dispatch(addToCart(body)).unwrap()
       toast.success('Thêm vào giỏ hàng thành công')
     } catch (error) {
-      handleErrorApi<any>({ error: error as any, setError: form.setError })
-      toast.error('Thêm vào giỏ hàng thất bại')
+      handleErrorApi<AddToCartBodyType>({
+        error: error,
+        duration: 4000,
+        showToastForFieldError: true
+      })
     }
   }
 
@@ -84,12 +89,33 @@ export default function ProductDetailPage() {
 
   // Compute selectedSkuId whenever selection changes
   useEffect(() => {
-    const skus = (product as any)?.skus as { id: number; value: string }[] | undefined
-    if (!product || !skus || !product.variants) return
+    if (!product || !product.skus || !product.variants) return
     const selectedValue = product.variants.map((v) => selectedOptions[v.value]).join('-')
-    const matched = skus.find((s) => s.value === selectedValue)
+    const matched = product.skus.find((s: SKUType) => s.value === selectedValue)
     setSelectedSkuId(matched ? matched.id : null)
   }, [product, selectedOptions])
+  // Show loading state if product detail is loading
+  if (isProductDetailLoading && !product) {
+    return (
+      <div className='container mx-auto px-4 py-6 md:py-8'>
+        <div className='flex items-center justify-center h-64'>
+          <div className='text-slate-500'>Đang tải thông tin sản phẩm...</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show not found if product doesn't exist
+  if (!isProductDetailLoading && !product) {
+    return (
+      <div className='container mx-auto px-4 py-6 md:py-8'>
+        <div className='flex items-center justify-center h-64'>
+          <div className='text-slate-500'>Không tìm thấy sản phẩm</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className='container mx-auto px-4 py-6 md:py-8'>
       {/* Breadcrumbs */}
@@ -132,9 +158,11 @@ export default function ProductDetailPage() {
         <section className='lg:col-span-3'>
           <h1 className='text-xl md:text-2xl font-extrabold text-slate-900'>{product?.name ?? '—'}</h1>
           <div className='mt-1 flex items-center gap-3 text-xs text-slate-500'>
-            <span>Brand: {(product as any)?.brand?.name ?? `#${product?.brandId ?? '—'}`}</span>
-            {(product as any)?.categories && (product as any).categories.length > 0 && (
-              <span>• Category: {(product as any).categories.map((cat: any) => cat.name).join(', ')}</span>
+            <span>Brand: {product?.brand?.name ?? `#${product?.brandId ?? '—'}`}</span>
+            {product?.categories && product.categories.length > 0 && (
+              <span>
+                • Category: {product.categories.map((cat: CategoryIncludeTranslationType) => cat.name).join(', ')}
+              </span>
             )}
             {product?.publishAt && <span>• Phát hành: {new Date(product.publishAt).toLocaleDateString('vi-VN')}</span>}
           </div>
@@ -177,7 +205,7 @@ export default function ProductDetailPage() {
                 </div>
               ))}
               {/* Current combination preview */}
-              {(product as any)?.skus && (
+              {product?.skus && (
                 <div className='text-xs text-slate-600'>
                   Đã Chọn: {product.variants.map((v) => selectedOptions[v.value]).join('-') || '—'}
                 </div>
@@ -250,14 +278,129 @@ export default function ProductDetailPage() {
       {/* Tabs */}
       <div className='mt-8 rounded-xl ring-1 ring-slate-200 bg-white'>
         <div className='flex border-b text-sm'>
-          <button className='px-4 py-3 font-medium text-slate-900 border-b-2 border-slate-900'>Mô tả</button>
+          <button className='px-4 py-3 font-medium text-slate-900 border-b-2 border-slate-900'>Mô tả sản phẩm</button>
         </div>
-        <div className='p-4 text-sm text-slate-600'>
-          Sản phẩm: {product?.name ?? '—'}. Thương hiệu:{' '}
-          {(product as any)?.brand?.name ?? `#${product?.brandId ?? '—'}`}.
-          {(product as any)?.categories && (product as any).categories.length > 0 && (
-            <span> Danh mục: {(product as any).categories.map((cat: any) => cat.name).join(', ')}.</span>
+
+        <div className='p-6 text-sm text-slate-700 leading-relaxed space-y-4'>
+          {/* Product Basic Info */}
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg'>
+            <div>
+              <p>
+                <span className='font-semibold text-slate-900'>Tên sản phẩm:</span> {product?.name ?? '—'}
+              </p>
+              <p>
+                <span className='font-semibold text-slate-900'>Thương hiệu:</span>{' '}
+                {product?.brand?.translations?.find((t) => t.languageId === 'vi')?.name ??
+                  product?.brand?.name ??
+                  `#${product?.brandId ?? '—'}`}
+              </p>
+            </div>
+            <div>
+              {product?.categories && product.categories.length > 0 && (
+                <p>
+                  <span className='font-semibold text-slate-900'>Danh mục:</span>{' '}
+                  {product.categories
+                    .map(
+                      (cat: CategoryIncludeTranslationType) =>
+                        cat.translations?.find((t) => t.languageId === 'vi')?.name ?? cat.name
+                    )
+                    .filter(Boolean)
+                    .join(', ')}
+                </p>
+              )}
+              {product?.publishAt && (
+                <p>
+                  <span className='font-semibold text-slate-900'>Ngày phát hành:</span>{' '}
+                  {new Date(product.publishAt).toLocaleDateString('vi-VN')}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Product Description */}
+          <div className='space-y-3'>
+            <h3 className='font-semibold text-slate-900 text-base'>Mô tả sản phẩm</h3>
+            <div className='text-slate-600 leading-relaxed'>
+              {product?.translations?.find((t) => t.languageId === 'vi')?.description ? (
+                <p>{product.translations.find((t) => t.languageId === 'vi')?.description}</p>
+              ) : (
+                <p>
+                  Sản phẩm <span className='font-medium'>{product?.name ?? 'này'}</span> là lựa chọn tuyệt vời dành cho
+                  những ai đang tìm kiếm sự cân bằng giữa <span className='font-medium text-slate-900'>chất lượng</span>{' '}
+                  và <span className='font-medium text-slate-900'>giá thành hợp lý</span>. Được thiết kế với độ hoàn
+                  thiện cao, sản phẩm mang lại trải nghiệm sử dụng bền bỉ, hiện đại và đáp ứng tốt nhu cầu hàng ngày của
+                  người dùng.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Product Variants & SKUs */}
+          {product?.variants && product.variants.length > 0 && (
+            <div className='space-y-3'>
+              <h3 className='font-semibold text-slate-900 text-base'>Thông số kỹ thuật</h3>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                {product.variants.map((variant) => (
+                  <div key={variant.value} className='p-3 bg-slate-50 rounded-lg'>
+                    <p className='font-medium text-slate-900 mb-2 capitalize'>{variant.value}:</p>
+                    <div className='flex flex-wrap gap-2'>
+                      {variant.options.map((option) => (
+                        <span
+                          key={option}
+                          className='px-2 py-1 bg-white border border-slate-200 rounded text-xs text-slate-700'
+                        >
+                          {option}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
+
+          {/* Available SKUs */}
+          {product?.skus && product.skus.length > 0 && (
+            <div className='space-y-3'>
+              <h3 className='font-semibold text-slate-900 text-base'>Các phiên bản có sẵn</h3>
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
+                {product.skus.slice(0, 6).map((sku: SKUType) => (
+                  <div key={sku.id} className='p-3 border border-slate-200 rounded-lg'>
+                    <p className='font-medium text-slate-900 text-xs mb-1'>{sku.value}</p>
+                    <p className='text-slate-600 text-xs'>
+                      Giá: <span className='font-medium'>{priceFmt.format(sku.price || product?.basePrice || 0)}</span>
+                    </p>
+                    <p className='text-slate-600 text-xs'>
+                      Tồn kho: <span className='font-medium'>{sku.stock || 0} sản phẩm</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Product Features */}
+          <div className='space-y-3'>
+            <h3 className='font-semibold text-slate-900 text-base'>Đặc điểm nổi bật</h3>
+            <ul className='list-disc list-inside text-slate-600 space-y-2'>
+              <li>Thiết kế tinh tế, phù hợp với nhiều không gian sử dụng</li>
+              <li>Chất liệu cao cấp, đảm bảo độ bền và an toàn khi sử dụng</li>
+              <li>Dễ dàng vệ sinh và bảo quản trong quá trình sử dụng</li>
+              <li>Bảo hành chính hãng theo quy định của nhà sản xuất</li>
+              {product?.brand?.name && <li>Được sản xuất bởi thương hiệu uy tín {product.brand.name}</li>}
+            </ul>
+          </div>
+
+          {/* Pricing Information */}
+
+          {/* Conclusion */}
+          <div className='text-slate-600 leading-relaxed'>
+            <p>
+              Đây là một sản phẩm đáng cân nhắc cho những ai mong muốn nâng cao trải nghiệm sống hằng ngày, mang lại sự
+              tiện nghi và phong cách cho không gian của bạn. Với chất lượng đảm bảo và giá thành hợp lý, sản phẩm này
+              sẽ là lựa chọn lý tưởng cho nhu cầu sử dụng của bạn.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -265,7 +408,7 @@ export default function ProductDetailPage() {
       <section className='mt-8'>
         <h2 className='text-lg md:text-xl font-semibold text-slate-900 mb-3'>Related products</h2>
         <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4'>
-          {products
+          {productList.data
             .filter((p) => p.id !== Number(id)) // Loại bỏ sản phẩm hiện tại
             .slice(0, 6) // Chỉ hiển thị 6 sản phẩm
             .map((p) => (
