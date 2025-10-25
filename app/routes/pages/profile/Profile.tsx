@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '~/store'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Input } from '~/components/ui/input'
-import { Upload } from 'lucide-react'
+import { Eye, EyeOff, Upload } from 'lucide-react'
 import { uploadMedia } from '~/features/mediaSlice'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { UpdateUserProfileBodySchema, type UpdateUserProfileBodyType } from '~/validateSchema/profile.chema'
@@ -40,6 +40,10 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'update' | 'password' | 'security' | 'disable2fa' | 'orders'>('update')
   const [is2FAEnabled, setIs2FAEnabled] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+
   useEffect(() => {
     dispatch(fetchProfile())
   }, [dispatch])
@@ -393,21 +397,59 @@ export default function ProfilePage() {
             </div>
             <div className='p-4 grid grid-cols-1 gap-4'>
               <Field label='Current password *'>
-                <input
-                  className={inputCls}
-                  type='password'
-                  {...registerPwd('password', { required: 'Current password is required' })}
-                />
+                <div className='relative'>
+                  <input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    className={`${inputCls} pr-10`}
+                    placeholder=''
+                    {...registerPwd('password')}
+                  />
+                  <button
+                    type='button'
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className='text-xs text-slate-500 hover:text-slate-700 absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer'
+                  >
+                    {showCurrentPassword ? <Eye /> : <EyeOff />}
+                  </button>
+                </div>
                 {errorsPwd.password && <p className='text-xs text-red-600 mt-1'>{errorsPwd.password.message}</p>}
               </Field>
 
               <Field label='New password *'>
-                <input className={inputCls} type='password' {...registerPwd('newPassword')} />
+                <div className='relative'>
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    className={`${inputCls} pr-10`}
+                    placeholder=''
+                    {...registerPwd('newPassword')}
+                  />
+                  <button
+                    type='button'
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className='text-xs text-slate-500 hover:text-slate-700 absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer'
+                  >
+                    {showNewPassword ? <Eye /> : <EyeOff />}
+                  </button>
+                </div>
                 {errorsPwd.newPassword && <p className='text-xs text-red-600 mt-1'>{errorsPwd.newPassword.message}</p>}
               </Field>
 
               <Field label='Confirm new password *'>
-                <input className={inputCls} type='password' {...registerPwd('confirmPassword')} />
+                <div className='relative'>
+                  <input
+                    type={showConfirmNewPassword ? 'text' : 'password'}
+                    className={`${inputCls} pr-10`}
+                    placeholder=''
+                    {...registerPwd('confirmPassword')}
+                  />
+                  <button
+                    type='button'
+                    onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                    className='text-xs text-slate-500 hover:text-slate-700 absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer'
+                  >
+                    {showConfirmNewPassword ? <Eye /> : <EyeOff />}
+                  </button>
+                </div>
                 {errorsPwd.confirmPassword && (
                   <p className='text-xs text-red-600 mt-1'>{errorsPwd.confirmPassword.message}</p>
                 )}
